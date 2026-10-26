@@ -12,7 +12,7 @@ interface FullPageLoaderProps {
 }
 
 export const FullPageLoader: React.FC<FullPageLoaderProps> = ({
-  label = 'Loading your ledger…',
+  label = 'Loading FinFlow…',
 }) => {
   return (
     <div className="grid min-h-dvh place-items-center bg-canvas px-4">

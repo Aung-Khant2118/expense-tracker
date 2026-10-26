@@ -167,7 +167,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       description={
         isEditing
           ? 'Update this entry. Monthly totals recalculate immediately.'
-          : 'Record an income or expense. It appears in the ledger right away.'
+          : 'Record an income or expense. It appears in FinFlow right away.'
       }
       footer={
         <>

@@ -71,7 +71,7 @@ export function BrandMark({
             inverse ? 'text-sidebar-ink' : 'text-ink'
           )}
         >
-          Ledger
+          FinFlow
         </span>
         <span
           className={cn(

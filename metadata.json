@@ -1,5 +1,5 @@
 {
-  "name": "Personal Expense Tracker",
+  "name": "FinFlow",
   "description": "Private, local-first expense tracker with transaction logging, monthly balance calculations, and spending insights.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

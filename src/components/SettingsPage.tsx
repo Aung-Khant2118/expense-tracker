@@ -290,7 +290,7 @@ export const SettingsPage: React.FC = () => {
   const handleExportJSON = () => {
     triggerDownload(
       buildBackupJSON({ settings, categories, transactions }),
-      `ledger-backup-${toISODate()}.json`,
+      `finflow-backup-${toISODate()}.json`,
       'application/json'
     );
   };
@@ -298,7 +298,7 @@ export const SettingsPage: React.FC = () => {
   const handleExportCSV = () => {
     triggerDownload(
       exportTransactionsToCSV(transactions, categories),
-      `ledger-transactions-${toISODate()}.csv`,
+      `finflow-transactions-${toISODate()}.csv`,
       'text/csv'
     );
   };
@@ -336,13 +336,13 @@ export const SettingsPage: React.FC = () => {
     try {
       await resetToSample();
       setImportMessage({
-        text: 'The sample ledger has been restored.',
+        text: 'The sample data has been restored.',
         success: true,
       });
       setIsResetOpen(false);
     } catch (error) {
       setImportMessage({
-        text: error instanceof Error ? error.message : 'Could not reset the ledger.',
+        text: error instanceof Error ? error.message : 'Could not reset your data.',
         success: false,
       });
     } finally {
@@ -354,7 +354,7 @@ export const SettingsPage: React.FC = () => {
     <div className="space-y-5 sm:space-y-6">
       <PageHeader
         title="Settings"
-        description="Choose how Ledger looks, organize your categories, and keep a backup."
+        description="Choose how FinFlow looks, organize your categories, and keep a backup."
       />
 
       {/* Appearance and preferences */}
@@ -534,7 +534,7 @@ export const SettingsPage: React.FC = () => {
       <Panel>
         <PanelHeader
           title="Data and backups"
-          description="Your ledger lives in this browser. Keep a copy somewhere safe."
+          description="Your data lives in this browser. Keep a copy somewhere safe."
         />
 
         {importMessage && (
@@ -611,7 +611,7 @@ export const SettingsPage: React.FC = () => {
 
           <DataRow
             icon={<RotateCcw className="size-4" />}
-            title="Reset to the sample ledger"
+            title="Reset to sample data"
             description="Clear everything and restore the original sample transactions and categories."
             danger
             action={
@@ -633,7 +633,7 @@ export const SettingsPage: React.FC = () => {
       {/* About */}
       <Panel>
         <PanelHeader
-          title="About Ledger"
+          title="About FinFlow"
           description="A private, local-first expense tracker."
         />
 
@@ -663,7 +663,7 @@ export const SettingsPage: React.FC = () => {
         title={editingCategory ? 'Edit category' : 'New category'}
         description={
           editingCategory
-            ? 'Update how this category appears in your ledger.'
+            ? 'Update how this category appears in FinFlow.'
             : 'Give the category a name, icon, and color.'
         }
         footer={
@@ -899,7 +899,7 @@ export const SettingsPage: React.FC = () => {
         open={isResetOpen}
         onClose={() => setIsResetOpen(false)}
         title="Reset all data?"
-        description="This replaces the current ledger with the original sample data."
+        description="This replaces the current data with the original sample data."
         role="alertdialog"
         size="sm"
         footer={
@@ -924,7 +924,7 @@ export const SettingsPage: React.FC = () => {
           <div className="text-sm leading-relaxed text-muted">
             <p>
               All transactions, categories, and preferences in this browser will be replaced with
-              the sample ledger.
+              the sample data.
             </p>
             <p className="mt-2 text-xs font-medium text-expense">
               Save a backup first if you want to keep the current data.

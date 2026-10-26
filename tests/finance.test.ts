@@ -19,7 +19,7 @@ const mockCategories: Category[] = [
   { id: 'cat-rent', name: 'Housing & Bills', type: 'expense', icon: 'Home', color: '#ef4444', createdAt: '2026-01-01' },
 ];
 
-console.log('Running Personal Expense Tracker Financial Calculation Tests...\n');
+console.log('Running FinFlow Financial Calculation Tests...\n');
 
 // Test 1: Core prompt example (800,000 MMK income - 350,000 MMK expenses = 450,000 MMK balance)
 {

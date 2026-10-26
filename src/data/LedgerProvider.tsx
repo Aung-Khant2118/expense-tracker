@@ -66,7 +66,7 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const next = await localLedgerStore.load();
       setData(next);
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'Could not load your ledger.');
+      setLoadError(error instanceof Error ? error.message : 'Could not load FinFlow.');
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,7 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const handleStorage = (event: StorageEvent) => {
       if (!event.key || !event.key.startsWith('expense_tracker_')) return;
       refresh().catch((error) => {
-        console.error('Could not refresh the ledger after another tab changed it.', error);
+        console.error('Could not refresh FinFlow after another tab changed it.', error);
       });
     };
 
@@ -226,7 +226,7 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             <AlertTriangle className="size-5" />
           </span>
           <h1 className="mt-4 font-display text-xl font-semibold text-ink">
-            Could not open your ledger
+            Could not open FinFlow
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">{loadError}</p>
           <Button variant="primary" className="mt-5 w-full justify-center" onClick={() => void load()}>

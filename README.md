@@ -1,4 +1,4 @@
-# Ledger — Personal Expense Tracker
+# FinFlow — Personal Expense Tracker
 
 A private, local-first expense tracker for daily transactions, monthly balances, and spending patterns. Open the link, and everything is stored in your browser — no account, no server, no sync service.
 
@@ -41,7 +41,7 @@ Built with React 19, TypeScript, Vite, and Tailwind CSS.
 - Currency formatting is display-only; stored amounts never change.
 - Create, edit, recolor, and delete income/expense categories with icons.
 - Deleting a category that has transactions requires reassigning them first.
-- Export all data as a JSON backup, restore from JSON, export transactions as CSV, or reset to the sample ledger.
+- Export all data as a JSON backup, restore from JSON, export transactions as CSV, or reset to the sample data.
 
 ## Tech stack
 
@@ -72,7 +72,7 @@ npm run dev
 
 The dev server listens on **http://localhost:3000** and is exposed on the local network (`--host 0.0.0.0`).
 
-On first launch the app seeds a sample ledger so every screen has data to show. You can replace it via **Settings → Reset data**.
+On first launch the app seeds sample data so every screen has something to show. You can replace it via **Settings → Reset data**.
 
 ### Build for production
 
@@ -83,7 +83,7 @@ npm run preview
 
 The production bundle is written to `dist/` and is fully static, so it deploys as-is to Vercel, Netlify, Cloudflare Pages, GitHub Pages, or any static host. No server or routing rules are required.
 
-> Keeping the same deployment URL matters: browser storage is keyed to the exact origin. Moving from `localhost:3000` to a real domain, or between a preview URL and production, starts with an empty ledger. Use a backup to carry data over.
+> Keeping the same deployment URL matters: browser storage is keyed to the exact origin. Moving from `localhost:3000` to a real domain, or between a preview URL and production, starts with an empty data set. Use a backup to carry data over.
 
 ## Available scripts
 
@@ -154,6 +154,8 @@ All application data lives in the browser under three `localStorage` keys:
 | `expense_tracker_categories_v1`     | Income and expense categories              |
 | `expense_tracker_settings_v1`       | Theme, currency, and week-start preference |
 
+> The `expense_tracker_*` and `ledger_theme_v1` key names predate the FinFlow rename. They are kept unchanged so existing browser data continues to load.
+
 `src/services/localLedger.ts` is the only module that touches storage. It exposes CRUD helpers for transactions and categories plus a `LedgerStore` object. `src/data/LedgerProvider.tsx` wraps that store in React context, handles loading and error states, updates state optimistically, and reloads when another tab writes to `localStorage`.
 
 Immediately after a change is confirmed in the UI, it is written to `localStorage`. Closing the tab, closing the browser, or restarting the computer does not remove it.
@@ -170,8 +172,8 @@ Key calculations are pure functions in `src/utils/finance.ts`:
 
 - Nothing is sent to a server. There is no analytics, authentication, or network persistence.
 - Data is scoped to one browser, one profile, and one origin. It does **not** sync across devices or browsers.
-- The following all start with an empty ledger: a different browser or profile, a different device, `localhost` vs. a deployed domain, a different preview URL, a private/incognito window, or a link opened inside an in-app browser (WhatsApp, Instagram, email previews).
-- Clearing site data deletes the ledger permanently. Safari can also evict script-written storage after about seven days without a visit.
+- The following all start with empty data: a different browser or profile, a different device, `localhost` vs. a deployed domain, a different preview URL, a private/incognito window, or a link opened inside an in-app browser (WhatsApp, Instagram, email previews).
+- Clearing site data deletes your data permanently. Safari can also evict script-written storage after about seven days without a visit.
 - Use **Settings → Save a full backup** to download a JSON archive containing transactions, categories, and preferences. This is the only way to move data to another device or recover from cleared storage.
 - Use **Settings → Restore from a backup** to load a JSON archive. Importing replaces the current data in that browser.
 - Use **Export CSV** for a spreadsheet-friendly copy of transactions.
@@ -196,7 +198,7 @@ The suite covers:
 - `localStorage` holds roughly 5 MB, which is ample for years of transactions but not for attachments.
 - No recurring transactions, budgets, or attachment uploads yet.
 - Charts are hand-built SVG components, so no charting library is required.
-- The package name in `package.json` is still the template default (`react-example`); the product name shown in the UI is **Ledger**.
+- The package is named `finflow` in `package.json`, matching the **FinFlow** product name shown in the UI.
 
 ## License
 

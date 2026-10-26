@@ -212,7 +212,7 @@ function LedgerApp() {
 
           <footer className="border-t border-rule">
             <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-1 px-4 py-5 text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-              <span>Ledger, a private personal expense tracker</span>
+              <span>FinFlow, a private personal expense tracker</span>
               <span>
                 Stored in this browser · Amounts in {settings.currency}
                 {settings.theme === 'dark' ? ' · Dark theme' : ' · Light theme'}

@@ -192,7 +192,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
 
   const handleExportCSV = () => {
     const csv = exportTransactionsToCSV(filteredTransactions, categories);
-    triggerDownload(csv, `ledger-transactions-${toISODate()}.csv`, 'text/csv');
+    triggerDownload(csv, `finflow-transactions-${toISODate()}.csv`, 'text/csv');
   };
 
   const handleClearFilters = () => {
@@ -532,8 +532,8 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             title="No transactions found"
             description={
               hasActiveFilters
-                ? 'Try a different search, or clear the filters to see the full ledger.'
-                : 'Your ledger is empty. Add the first income or expense to get started.'
+                ? 'Try a different search, or clear the filters to see all transactions.'
+                : 'Your data is empty. Add the first income or expense to get started.'
             }
             action={
               hasActiveFilters ? (
