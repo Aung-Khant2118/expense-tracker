@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { AppShell, type NavTab } from './components/AppShell.tsx';
 import { DashboardPage } from './components/DashboardPage.tsx';
@@ -13,6 +13,7 @@ import { ReportsPage } from './components/ReportsPage.tsx';
 import { SettingsPage } from './components/SettingsPage.tsx';
 import { TransactionModal } from './components/TransactionModal.tsx';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal.tsx';
+import { Toast, type ToastMessage } from './components/Toast.tsx';
 import { LedgerProvider, useLedger } from './data/LedgerProvider.tsx';
 import type { NewTransactionInput, Transaction } from './types/finance.ts';
 import { calculateMonthlySummary, formatCurrency, toISODate } from './utils/finance.ts';
@@ -40,6 +41,13 @@ function LedgerApp() {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [txToDelete, setTxToDelete] = useState<Transaction | null>(null);
+
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+
+  const dismissToast = useCallback(() => setToast(null), []);
+  const notify = useCallback((text: string) => {
+    setToast({ id: Date.now(), text });
+  }, []);
 
   const summary = useMemo(
     () => calculateMonthlySummary(transactions, categories, selectedYear, selectedMonth),
@@ -84,9 +92,17 @@ function LedgerApp() {
   const handleSaveTransaction = async (data: NewTransactionInput, editId?: string) => {
     if (editId) {
       await updateTransaction(editId, data);
-    } else {
-      await createTransaction(data);
+      notify('Transaction updated.');
+      return;
     }
+
+    await createTransaction(data);
+    notify(
+      `${data.type === 'income' ? 'Income' : 'Expense'} of ${formatCurrency(
+        data.amount,
+        settings.currency
+      )} added.`
+    );
   };
 
   const handlePromptDeleteTransaction = (transaction: Transaction) => {
@@ -96,8 +112,16 @@ function LedgerApp() {
 
   const handleConfirmDeleteTransaction = async () => {
     if (!txToDelete) return;
-    await deleteTransaction(txToDelete.id);
+
+    const deleted = txToDelete;
+    await deleteTransaction(deleted.id);
     setTxToDelete(null);
+    notify(
+      `${deleted.type === 'income' ? 'Income' : 'Expense'} of ${formatCurrency(
+        deleted.amount,
+        settings.currency
+      )} deleted.`
+    );
   };
 
   const handleToggleTheme = async () => {
@@ -249,6 +273,8 @@ function LedgerApp() {
             : 'This transaction will be permanently removed. This cannot be undone.'
         }
       />
+
+      <Toast toast={toast} onDismiss={dismissToast} />
     </div>
   );
 }
