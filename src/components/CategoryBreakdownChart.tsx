@@ -4,10 +4,11 @@
  */
 
 import React from 'react';
+import { PieChart } from 'lucide-react';
 import { CategoryBreakdownItem } from '../types/finance.ts';
 import { formatCurrency } from '../utils/finance.ts';
-import { CategoryIcon } from './CategoryIcon.tsx';
-import { PieChart as PieIcon } from 'lucide-react';
+import { CategoryAvatar } from './CategoryIcon.tsx';
+import { EmptyState, Panel, PanelHeader } from './ui.tsx';
 
 interface CategoryBreakdownChartProps {
   items: CategoryBreakdownItem[];
@@ -22,125 +23,71 @@ export const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
 }) => {
   if (items.length === 0 || totalExpense === 0) {
     return (
-      <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs flex flex-col items-center justify-center text-center min-h-[300px]">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
-          <PieIcon className="w-6 h-6" />
-        </div>
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">No Expenses Recorded</h4>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
-          There are no expense transactions for this month yet. Log daily expenses to see category breakdowns.
-        </p>
-      </div>
+      <Panel className="flex min-h-[300px] flex-col">
+        <PanelHeader title="Where it went" description="Spending by category." />
+        <EmptyState
+          className="flex-1"
+          icon={<PieChart className="size-5" />}
+          title="No expenses this month"
+          description="Add an expense to see how your spending is distributed."
+        />
+      </Panel>
     );
   }
 
-  // Pre-calculate SVG Donut slices
-  let cumulativeAngle = 0;
-  const radius = 60;
-  const strokeWidth = 22;
-  const center = 80;
-  const circumference = 2 * Math.PI * radius;
-
   return (
-    <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-            Expense Breakdown
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Spending distribution by category
-          </p>
-        </div>
-        <span className="text-xs font-mono font-semibold tabular-nums text-slate-700 dark:text-slate-300">
-          {items.length} {items.length === 1 ? 'Category' : 'Categories'}
-        </span>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* SVG Donut */}
-        <div className="md:col-span-5 flex flex-col items-center justify-center relative">
-          <svg width="160" height="160" viewBox="0 0 160 160" className="transform -rotate-90">
-            {/* Background Circle */}
-            <circle
-              cx={center}
-              cy={center}
-              r={radius}
-              fill="transparent"
-              stroke="currentColor"
-              strokeWidth={strokeWidth}
-              className="text-slate-100 dark:text-slate-800"
-            />
-            {/* Segment Slices */}
-            {items.map((item) => {
-              const strokeDasharray = `${(item.percentage / 100) * circumference} ${circumference}`;
-              const strokeDashoffset = -cumulativeAngle;
-              cumulativeAngle += (item.percentage / 100) * circumference;
-
-              return (
-                <circle
-                  key={item.categoryId}
-                  cx={center}
-                  cy={center}
-                  r={radius}
-                  fill="transparent"
-                  stroke={item.color}
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={strokeDasharray}
-                  strokeDashoffset={strokeDashoffset}
-                  className="transition-all duration-300 hover:opacity-85"
-                />
-              );
-            })}
-          </svg>
-
-          {/* Donut Center Label */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-            <span className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
-              Total Spent
-            </span>
-            <span className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100 px-2 truncate max-w-[120px]">
+    <Panel>
+      <PanelHeader
+        title="Where it went"
+        description="Spending by category."
+        action={
+          <div className="text-right">
+            <p className="text-[10px] text-muted">Total spent</p>
+            <p className="font-mono text-xs font-medium tabular-nums text-ink">
               {formatCurrency(totalExpense, currency)}
-            </span>
+            </p>
           </div>
-        </div>
+        }
+      />
 
-        {/* Categories Detail List */}
-        <div className="md:col-span-7 space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+      <div className="p-5">
+        <div
+          className="flex h-2.5 overflow-hidden rounded-full bg-surface-2"
+          role="img"
+          aria-label={`Expense distribution across ${items.length} categories`}
+        >
           {items.map((item) => (
             <div
               key={item.categoryId}
-              className="flex items-center justify-between text-xs p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className="w-5 h-5 rounded-md flex items-center justify-center text-white shrink-0"
-                  style={{ backgroundColor: item.color }}
-                >
-                  <CategoryIcon name={item.icon} size={11} color="#ffffff" />
-                </div>
-                <div className="truncate">
-                  <div className="font-medium text-slate-900 dark:text-slate-100 truncate">
-                    {item.categoryName}
-                  </div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                    {item.transactionCount} {item.transactionCount === 1 ? 'transaction' : 'transactions'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-right shrink-0 pl-2">
-                <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                  {formatCurrency(item.amount, currency)}
-                </div>
-                <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                  {item.percentage.toFixed(1)}%
-                </div>
-              </div>
-            </div>
+              style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
+              title={`${item.categoryName}: ${item.percentage.toFixed(1)}%`}
+            />
           ))}
         </div>
+
+        <ul className="mt-4 max-h-[290px] divide-y divide-rule overflow-y-auto pr-1">
+          {items.map((item) => (
+            <li key={item.categoryId} className="flex items-center gap-3 py-3">
+              <CategoryAvatar category={item} size="sm" />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="truncate text-xs font-medium text-ink">{item.categoryName}</span>
+                  <span className="shrink-0 font-mono text-xs font-medium tabular-nums text-ink">
+                    {formatCurrency(item.amount, currency)}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-3 text-[10px] text-muted">
+                  <span>
+                    {item.transactionCount} {item.transactionCount === 1 ? 'transaction' : 'transactions'}
+                  </span>
+                  <span className="font-mono tabular-nums">{item.percentage.toFixed(1)}%</span>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
+    </Panel>
   );
 };

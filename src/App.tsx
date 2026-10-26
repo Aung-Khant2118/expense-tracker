@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { NavTab, TopBar } from './components/TopBar.tsx';
+import { AppShell, NavTab } from './components/AppShell.tsx';
 import { DashboardPage } from './components/DashboardPage.tsx';
 import { TransactionsPage } from './components/TransactionsPage.tsx';
 import { CalendarPage } from './components/CalendarPage.tsx';
@@ -23,29 +23,26 @@ import {
   deleteTransaction,
   subscribeToStorage,
 } from './services/storage.ts';
-import { calculateMonthlySummary, formatCurrency } from './utils/finance.ts';
+import { calculateMonthlySummary, formatCurrency, toISODate } from './utils/finance.ts';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+  const [now] = useState(() => new Date());
 
-  // Today's reference (October 2026 based on runtime context)
-  const now = new Date();
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
 
-  // Storage State
+  // Storage state
   const [transactions, setTransactions] = useState<Transaction[]>(() => getStoredTransactions());
   const [categories, setCategories] = useState<Category[]>(() => getStoredCategories());
   const [settings, setSettings] = useState<UserSettings>(() => getStoredSettings());
 
-  // Reload data from storage
   const reloadData = useCallback(() => {
     setTransactions(getStoredTransactions());
     setCategories(getStoredCategories());
     setSettings(getStoredSettings());
   }, []);
 
-  // Subscribe to storage changes
   useEffect(() => {
     const unsubscribe = subscribeToStorage(() => {
       reloadData();
@@ -53,7 +50,16 @@ export default function App() {
     return unsubscribe;
   }, [reloadData]);
 
-  // Modals state
+  // Apply the theme to the document and keep the browser chrome in sync.
+  useEffect(() => {
+    const isDark = settings.theme === 'dark';
+    document.documentElement.classList.toggle('dark', isDark);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', isDark ? '#0f1511' : '#f2f4ef');
+  }, [settings.theme]);
+
+  // Modals
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txToEdit, setTxToEdit] = useState<Transaction | null>(null);
   const [modalDefaultDate, setModalDefaultDate] = useState<string | undefined>(undefined);
@@ -61,21 +67,20 @@ export default function App() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [txToDelete, setTxToDelete] = useState<Transaction | null>(null);
 
-  // Monthly summary computed reactively
   const summary = useMemo(() => {
     return calculateMonthlySummary(transactions, categories, selectedYear, selectedMonth);
   }, [transactions, categories, selectedYear, selectedMonth]);
 
-  // Handlers for transactions
   const handleOpenAddModal = (dateStr?: string) => {
     setTxToEdit(null);
+    const isCurrentMonth =
+      selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1;
+
     setModalDefaultDate(
       dateStr ||
-        `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${
-          selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1
-            ? String(now.getDate()).padStart(2, '0')
-            : '01'
-        }`
+        (isCurrentMonth
+          ? toISODate(now)
+          : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`)
     );
     setIsTxModalOpen(true);
   };
@@ -116,85 +121,110 @@ export default function App() {
     setSettings(newSettings);
   };
 
+  const handleToggleTheme = () => {
+    handleUpdateSettings({
+      ...settings,
+      theme: settings.theme === 'dark' ? 'light' : 'dark',
+    });
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased">
-      {/* Top Bar with Brand, 5 Single-line Links, and Primary Action */}
-      <TopBar
+    <div className="min-h-dvh bg-canvas text-ink">
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
+
+      <AppShell
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenAddModal={() => handleOpenAddModal()}
-      />
+        theme={settings.theme}
+        onToggleTheme={handleToggleTheme}
+      >
+        <div className="md:pl-60">
+          <main
+            id="main"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-[1180px] px-4 pb-24 pt-6 sm:px-6 sm:pt-8 md:pb-10 lg:px-8"
+          >
+            {activeTab === 'dashboard' && (
+              <DashboardPage
+                year={selectedYear}
+                month={selectedMonth}
+                onMonthChange={(y, m) => {
+                  setSelectedYear(y);
+                  setSelectedMonth(m);
+                }}
+                transactions={transactions}
+                categories={categories}
+                settings={settings}
+                summary={summary}
+                onEditTransaction={handleOpenEditModal}
+                onDeleteTransaction={handlePromptDeleteTransaction}
+                onViewAllTransactions={() => setActiveTab('transactions')}
+                onNavigateToCalendar={() => setActiveTab('calendar')}
+              />
+            )}
 
-      {/* Main Content Viewport */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {activeTab === 'dashboard' && (
-          <DashboardPage
-            year={selectedYear}
-            month={selectedMonth}
-            onMonthChange={(y, m) => {
-              setSelectedYear(y);
-              setSelectedMonth(m);
-            }}
-            transactions={transactions}
-            categories={categories}
-            settings={settings}
-            summary={summary}
-            onOpenAddModal={() => handleOpenAddModal()}
-            onEditTransaction={handleOpenEditModal}
-            onDeleteTransaction={handlePromptDeleteTransaction}
-            onViewAllTransactions={() => setActiveTab('transactions')}
-            onNavigateToCalendar={() => setActiveTab('calendar')}
-          />
-        )}
+            {activeTab === 'transactions' && (
+              <TransactionsPage
+                transactions={transactions}
+                categories={categories}
+                settings={settings}
+                onOpenAddModal={() => handleOpenAddModal()}
+                onEditTransaction={handleOpenEditModal}
+                onDeleteTransaction={handlePromptDeleteTransaction}
+              />
+            )}
 
-        {activeTab === 'transactions' && (
-          <TransactionsPage
-            transactions={transactions}
-            categories={categories}
-            settings={settings}
-            onOpenAddModal={() => handleOpenAddModal()}
-            onEditTransaction={handleOpenEditModal}
-            onDeleteTransaction={handlePromptDeleteTransaction}
-          />
-        )}
+            {activeTab === 'calendar' && (
+              <CalendarPage
+                year={selectedYear}
+                month={selectedMonth}
+                onMonthChange={(y, m) => {
+                  setSelectedYear(y);
+                  setSelectedMonth(m);
+                }}
+                transactions={transactions}
+                categories={categories}
+                settings={settings}
+                onOpenAddModalWithDate={(dateStr) => handleOpenAddModal(dateStr)}
+                onEditTransaction={handleOpenEditModal}
+                onDeleteTransaction={handlePromptDeleteTransaction}
+              />
+            )}
 
-        {activeTab === 'calendar' && (
-          <CalendarPage
-            year={selectedYear}
-            month={selectedMonth}
-            onMonthChange={(y, m) => {
-              setSelectedYear(y);
-              setSelectedMonth(m);
-            }}
-            transactions={transactions}
-            categories={categories}
-            settings={settings}
-            onOpenAddModalWithDate={(dateStr) => handleOpenAddModal(dateStr)}
-            onEditTransaction={handleOpenEditModal}
-            onDeleteTransaction={handlePromptDeleteTransaction}
-          />
-        )}
+            {activeTab === 'reports' && (
+              <ReportsPage
+                transactions={transactions}
+                categories={categories}
+                settings={settings}
+              />
+            )}
 
-        {activeTab === 'reports' && (
-          <ReportsPage
-            transactions={transactions}
-            categories={categories}
-            settings={settings}
-          />
-        )}
+            {activeTab === 'settings' && (
+              <SettingsPage
+                settings={settings}
+                onUpdateSettings={handleUpdateSettings}
+                categories={categories}
+                transactions={transactions}
+                onReloadData={reloadData}
+              />
+            )}
+          </main>
 
-        {activeTab === 'settings' && (
-          <SettingsPage
-            settings={settings}
-            onUpdateSettings={handleUpdateSettings}
-            categories={categories}
-            transactions={transactions}
-            onReloadData={reloadData}
-          />
-        )}
-      </main>
+          <footer className="border-t border-rule">
+            <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-1 px-4 py-5 text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+              <span>Ledger, a private personal expense tracker</span>
+              <span>
+                Amounts in {settings.currency}
+                {settings.theme === 'dark' ? ' · Dark theme' : ' · Light theme'}
+              </span>
+            </div>
+          </footer>
+        </div>
+      </AppShell>
 
-      {/* Transaction Add/Edit Modal */}
       <TransactionModal
         isOpen={isTxModalOpen}
         onClose={() => setIsTxModalOpen(false)}
@@ -205,31 +235,20 @@ export default function App() {
         defaultDate={modalDefaultDate}
       />
 
-      {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDeleteTransaction}
-        title="Delete Transaction"
+        title="Delete this transaction?"
         message={
           txToDelete
-            ? `Are you sure you want to permanently delete this ${txToDelete.type} entry of ${formatCurrency(
+            ? `This will permanently remove the ${txToDelete.type} entry of ${formatCurrency(
                 txToDelete.amount,
                 settings.currency
-              )} on ${txToDelete.transactionDate}? This action cannot be undone.`
-            : 'Are you sure you want to delete this transaction?'
+              )} from ${txToDelete.transactionDate}. This cannot be undone.`
+            : 'This transaction will be permanently removed. This cannot be undone.'
         }
       />
-
-      {/* Minimal Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Personal Expense Tracker · Accurate Cash Flow & Spending Insights</span>
-          <span className="font-mono text-[11px] tabular-nums">
-            Default Currency: MMK ({settings.currency})
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }

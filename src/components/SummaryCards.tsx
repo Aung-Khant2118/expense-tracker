@@ -4,26 +4,72 @@
  */
 
 import React from 'react';
-import {
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  AlertTriangle,
-  Clock,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { MonthlySummary } from '../types/finance.ts';
 import { formatCurrency, getMonthName } from '../utils/finance.ts';
+import { cn } from './ui.tsx';
 
 interface SummaryCardsProps {
   summary: MonthlySummary;
   currency: string;
 }
 
+interface Change {
+  percent: number;
+  amount: number;
+  favorable: boolean;
+}
+
+function ChangeNote({ change }: { change: Change }) {
+  const rising = change.amount >= 0;
+  const Icon = rising ? ArrowUpRight : ArrowDownRight;
+
+  return (
+    <div
+      className={cn(
+        'mt-2 flex items-center gap-1 text-[11px]',
+        change.favorable ? 'text-income' : 'text-expense'
+      )}
+    >
+      <Icon className="size-3.5 shrink-0" />
+      <span className="font-mono font-medium tabular-nums">
+        {Math.abs(change.percent).toFixed(1)}%
+      </span>
+      <span className="text-muted">vs last month</span>
+    </div>
+  );
+}
+
+interface MetricProps {
+  label: string;
+  value: string;
+  tone?: 'default' | 'income' | 'expense';
+  note?: string;
+  change?: Change;
+  className?: string;
+}
+
+function Metric({ label, value, tone = 'default', note, change, className }: MetricProps) {
+  return (
+    <div className={cn('min-w-0 p-4 sm:p-5', className)}>
+      <p className="text-xs font-medium text-muted">{label}</p>
+      <p
+        className={cn(
+          'mt-2 font-mono text-xl font-medium tracking-tight tabular-nums',
+          tone === 'income' && 'text-income',
+          tone === 'expense' && 'text-expense',
+          tone === 'default' && 'text-ink'
+        )}
+      >
+        {value}
+      </p>
+      {change ? <ChangeNote change={change} /> : note ? <p className="mt-2 text-[11px] text-faint">{note}</p> : null}
+    </div>
+  );
+}
+
 export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, currency }) => {
   const {
-    year,
     month,
     totalIncome,
     totalExpenses,
@@ -33,154 +79,121 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, currency })
     daysElapsedInMonth,
     totalDaysInMonth,
     isCurrentMonth,
+    expensePercentage,
     previousMonthComparison,
   } = summary;
 
-  // Calculation period text
-  const calculationPeriodText = isCurrentMonth
-    ? `${daysElapsedInMonth} days elapsed (${getMonthName(month).slice(0, 3)} 1–${daysElapsedInMonth})`
-    : `Full month (${totalDaysInMonth} days)`;
+  const periodText = isCurrentMonth
+    ? `${getMonthName(month).slice(0, 3)} 1 to ${daysElapsedInMonth}`
+    : `Full month, ${totalDaysInMonth} days`;
+
+  const spentWidth = expensePercentage === null ? 0 : Math.min(100, expensePercentage);
+
+  const incomeChange =
+    previousMonthComparison?.incomeChangePercent !== null &&
+    previousMonthComparison?.incomeChangePercent !== undefined
+      ? {
+          percent: previousMonthComparison.incomeChangePercent,
+          amount: previousMonthComparison.incomeChangeAmount,
+          favorable: previousMonthComparison.incomeChangeAmount >= 0,
+        }
+      : undefined;
+
+  const expenseChange =
+    previousMonthComparison?.expenseChangePercent !== null &&
+    previousMonthComparison?.expenseChangePercent !== undefined
+      ? {
+          percent: previousMonthComparison.expenseChangePercent,
+          amount: previousMonthComparison.expenseChangeAmount,
+          favorable: previousMonthComparison.expenseChangeAmount <= 0,
+        }
+      : undefined;
 
   return (
-    <div className="space-y-4">
-      {/* Deficit Alert Banner if Expenses > Income */}
-      {isDeficit && (
-        <div className="flex items-start gap-3 p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-900 dark:text-rose-200">
-          <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <span className="font-semibold">Monthly Deficit Warning: </span>
-            Expenses exceed total income by{' '}
-            <span className="font-mono font-semibold tabular-nums">
-              {formatCurrency(Math.abs(monthlyBalance), currency)}
-            </span>
-            {summary.expensePercentage !== null && (
-              <span> ({summary.expensePercentage.toFixed(1)}% of income spent).</span>
+    <section className="overflow-hidden rounded-xl border border-rule bg-surface">
+      <div className="grid xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1.65fr)]">
+        {/* Balance */}
+        <div className="border-b border-rule p-4 sm:p-6 xl:border-b-0 xl:border-r">
+          <p className="text-xs font-medium text-muted">
+            {isDeficit ? 'Shortfall this month' : 'Money left this month'}
+          </p>
+          <p
+            className={cn(
+              'mt-2 font-display text-[38px] font-semibold leading-none tracking-tight tabular-nums sm:text-[46px]',
+              isDeficit ? 'text-expense' : 'text-ink'
             )}
-            <p className="mt-0.5 text-xs text-rose-700 dark:text-rose-300">
-              Consider reviewing discretionary spending or recording pending income receipts.
-            </p>
-          </div>
-        </div>
-      )}
+          >
+            {formatCurrency(monthlyBalance, currency)}
+          </p>
 
-      {/* 4 Core Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Income */}
-        <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Income
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(totalIncome, currency)}
-            </div>
-          </div>
-          {previousMonthComparison?.incomeChangePercent !== null && previousMonthComparison?.incomeChangePercent !== undefined && (
-            <div className="mt-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-              {previousMonthComparison.incomeChangeAmount >= 0 ? (
-                <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              ) : (
-                <ArrowDownRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-              )}
-              <span className={previousMonthComparison.incomeChangeAmount >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-rose-600 dark:text-rose-400 font-medium'}>
-                {Math.abs(previousMonthComparison.incomeChangePercent).toFixed(1)}%
+          <div className="mt-6">
+            <div className="flex items-baseline justify-between gap-3 text-[11px]">
+              <span className="text-muted">
+                {expensePercentage !== null
+                  ? `${expensePercentage.toFixed(0)}% of income spent`
+                  : 'No income recorded yet'}
               </span>
-              <span>vs previous month</span>
-            </div>
-          )}
-        </div>
-
-        {/* Card 2: Total Expenses */}
-        <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Expenses
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-              <TrendingDown className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold font-mono tabular-nums text-rose-600 dark:text-rose-400">
-              {formatCurrency(totalExpenses, currency)}
-            </div>
-          </div>
-          {previousMonthComparison?.expenseChangePercent !== null && previousMonthComparison?.expenseChangePercent !== undefined && (
-            <div className="mt-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-              {previousMonthComparison.expenseChangeAmount > 0 ? (
-                <ArrowUpRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-              ) : (
-                <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              )}
-              <span className={previousMonthComparison.expenseChangeAmount > 0 ? 'text-rose-600 dark:text-rose-400 font-medium' : 'text-emerald-600 dark:text-emerald-400 font-medium'}>
-                {Math.abs(previousMonthComparison.expenseChangePercent).toFixed(1)}%
+              <span className="font-mono tabular-nums text-faint">
+                {expensePercentage !== null ? `${Math.min(100, expensePercentage).toFixed(0)}%` : '—'}
               </span>
-              <span>vs previous month</span>
             </div>
-          )}
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-[width] duration-500',
+                  isDeficit
+                    ? 'bg-expense'
+                    : expensePercentage !== null && expensePercentage > 85
+                      ? 'bg-accent'
+                      : 'bg-income'
+                )}
+                style={{ width: `${spentWidth}%` }}
+              />
+            </div>
+          </div>
+
+          <p className="mt-4 text-[11px] leading-relaxed text-faint">
+            Calculated from entries dated {periodText}. Previous month balances are not counted as
+            income.
+          </p>
         </div>
 
-        {/* Card 3: Monthly Balance / Money Left */}
-        <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Monthly Balance
-            </span>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              isDeficit
-                ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
-                : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
-            }`}>
-              <Wallet className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className={`text-2xl font-bold font-mono tabular-nums ${
-              isDeficit ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'
-            }`}>
-              {formatCurrency(monthlyBalance, currency)}
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span>{isDeficit ? 'Monthly Deficit' : 'Money Left'}</span>
-            {summary.expensePercentage !== null ? (
-              <span className="font-mono tabular-nums font-medium">
-                {summary.expensePercentage.toFixed(0)}% spent
-              </span>
-            ) : (
-              <span className="font-mono tabular-nums text-slate-400">No income</span>
-            )}
-          </div>
-        </div>
-
-        {/* Card 4: Daily Spending Average */}
-        <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Daily Spending Avg
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100">
-              {formatCurrency(dailyAverageExpense, currency)}
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate">
-            <span>Period:</span>
-            <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
-              {calculationPeriodText}
-            </span>
-          </div>
+        {/* Supporting figures */}
+        <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3">
+          <Metric
+            label="Income"
+            value={formatCurrency(totalIncome, currency)}
+            tone="income"
+            change={incomeChange}
+          />
+          <Metric
+            label="Expenses"
+            value={formatCurrency(totalExpenses, currency)}
+            tone="expense"
+            change={expenseChange}
+            className="border-t border-rule min-[380px]:border-l min-[380px]:border-t-0"
+          />
+          <Metric
+            label="Daily average"
+            value={formatCurrency(dailyAverageExpense, currency)}
+            note={isCurrentMonth ? `Across ${daysElapsedInMonth} days so far` : `Across ${totalDaysInMonth} days`}
+            className="col-span-full border-t border-rule sm:col-span-1 sm:border-l sm:border-t-0"
+          />
         </div>
       </div>
-    </div>
+
+      {isDeficit && (
+        <div className="flex items-start gap-2.5 border-t border-expense/20 bg-expense-soft/60 px-5 py-3 sm:px-6">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-expense" />
+          <p className="text-xs leading-relaxed text-expense">
+            <span className="font-semibold">
+              Spending is {formatCurrency(Math.abs(monthlyBalance), currency)} above income this
+              month.
+            </span>{' '}
+            Review the largest categories below or add any income you have not logged yet.
+          </p>
+        </div>
+      )}
+    </section>
   );
 };

@@ -3,12 +3,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, Edit2, Plus, Trash2 } from 'lucide-react';
 import { Transaction, Category, UserSettings } from '../types/finance.ts';
 import { MonthSelector } from './MonthSelector.tsx';
-import { formatCurrency, getDaysInMonth, getMonthName } from '../utils/finance.ts';
-import { CategoryIcon } from './CategoryIcon.tsx';
-import { Plus, Edit2, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import {
+  formatCurrency,
+  formatDateLong,
+  formatDateShort,
+  getDaysInMonth,
+  getMonthName,
+  toISODate,
+} from '../utils/finance.ts';
+import { CategoryAvatar } from './CategoryIcon.tsx';
+import {
+  Button,
+  EmptyState,
+  IconButton,
+  PageHeader,
+  Panel,
+  cn,
+} from './ui.tsx';
 
 interface CalendarPageProps {
   year: number;
@@ -22,6 +37,22 @@ interface CalendarPageProps {
   onDeleteTransaction: (tx: Transaction) => void;
 }
 
+interface DayData {
+  income: number;
+  expense: number;
+  count: number;
+  items: Transaction[];
+}
+
+const EMPTY_DAY: DayData = { income: 0, expense: 0, count: 0, items: [] };
+
+function defaultDateForMonth(year: number, month: number): string {
+  const today = new Date();
+  const isCurrentMonth = year === today.getFullYear() && month === today.getMonth() + 1;
+  const day = isCurrentMonth ? today.getDate() : 1;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export const CalendarPage: React.FC<CalendarPageProps> = ({
   year,
   month,
@@ -33,273 +64,315 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
   onEditTransaction,
   onDeleteTransaction,
 }) => {
-  // Today's ISO date string
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  // Default selected date to today if currently in this month, else 1st day of month
-  const defaultSelectedDay = `${year}-${String(month).padStart(2, '0')}-${
-    year === new Date().getFullYear() && month === new Date().getMonth() + 1
-      ? String(new Date().getDate()).padStart(2, '0')
-      : '01'
-  }`;
-
-  const [selectedDate, setSelectedDate] = useState<string>(defaultSelectedDay);
-
-  const catMap = new Map(categories.map((c) => [c.id, c]));
-
-  // Days in month
-  const totalDays = getDaysInMonth(year, month);
-
-  // Group transactions for this month by date
-  const monthTransactions = transactions.filter((t) =>
-    t.transactionDate.startsWith(`${year}-${String(month).padStart(2, '0')}`)
+  const todayISO = toISODate();
+  const [selectedDate, setSelectedDate] = useState<string>(() =>
+    defaultDateForMonth(year, month)
   );
 
-  const dailyDataMap = new Map<string, { income: number; expense: number; count: number; items: Transaction[] }>();
-  for (const t of monthTransactions) {
-    const existing = dailyDataMap.get(t.transactionDate) || {
-      income: 0,
-      expense: 0,
-      count: 0,
-      items: [],
-    };
-    if (t.type === 'income') existing.income += t.amount;
-    else existing.expense += t.amount;
-    existing.count += 1;
-    existing.items.push(t);
-    dailyDataMap.set(t.transactionDate, existing);
-  }
+  // Keep the detail panel anchored to a real day when the visible month changes.
+  useEffect(() => {
+    setSelectedDate(defaultDateForMonth(year, month));
+  }, [year, month]);
 
-  // First day of month offset
-  // JS getDay(): 0 is Sunday, 1 is Monday ... 6 is Saturday
-  const firstDayOfMonthDate = new Date(year, month - 1, 1);
-  const startDayOfWeek = firstDayOfMonthDate.getDay();
+  const categoryMap = useMemo(
+    () => new Map(categories.map((category) => [category.id, category])),
+    [categories]
+  );
 
-  // Offset based on settings.firstDayOfWeek (0 = Sunday, 1 = Monday)
-  let blankDays = startDayOfWeek - settings.firstDayOfWeek;
-  if (blankDays < 0) blankDays += 7;
+  const monthPrefix = `${year}-${String(month).padStart(2, '0')}`;
 
-  // Day names header
-  const weekDayLabels = settings.firstDayOfWeek === 1
-    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dailyDataMap = useMemo(() => {
+    const map = new Map<string, DayData>();
 
-  // Selected date data
-  const selectedDayData = dailyDataMap.get(selectedDate) || {
-    income: 0,
-    expense: 0,
-    count: 0,
-    items: [],
-  };
+    for (const tx of transactions) {
+      if (!tx.transactionDate.startsWith(monthPrefix)) continue;
 
-  const selectedNet = selectedDayData.income - selectedDayData.expense;
+      const existing = map.get(tx.transactionDate) || {
+        income: 0,
+        expense: 0,
+        count: 0,
+        items: [],
+      };
+
+      if (tx.type === 'income') existing.income += tx.amount;
+      else existing.expense += tx.amount;
+
+      existing.count += 1;
+      existing.items.push(tx);
+      map.set(tx.transactionDate, existing);
+    }
+
+    return map;
+  }, [transactions, monthPrefix]);
+
+  const monthEntryCount = useMemo(
+    () => Array.from(dailyDataMap.values()).reduce((sum, day) => sum + day.count, 0),
+    [dailyDataMap]
+  );
+
+  const totalDays = getDaysInMonth(year, month);
+  const firstWeekday = new Date(year, month - 1, 1).getDay();
+  let leadingBlanks = firstWeekday - settings.firstDayOfWeek;
+  if (leadingBlanks < 0) leadingBlanks += 7;
+
+  const totalCells = Math.ceil((leadingBlanks + totalDays) / 7) * 7;
+  const trailingBlanks = totalCells - leadingBlanks - totalDays;
+
+  const weekdayLabels =
+    settings.firstDayOfWeek === 1
+      ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const selectedDay = dailyDataMap.get(selectedDate) || EMPTY_DAY;
+  const selectedNet = selectedDay.income - selectedDay.expense;
 
   return (
-    <div className="space-y-6">
-      {/* Header and Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Financial Calendar
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Visualize daily earnings, daily expenses, and net daily balances
-          </p>
-        </div>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Calendar"
+        description="See how spending and income are spread across the month."
+        actions={<MonthSelector year={year} month={month} onChange={onMonthChange} />}
+      />
 
-        <MonthSelector year={year} month={month} onChange={onMonthChange} />
-      </div>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-6">
+        <Panel className="overflow-hidden lg:col-span-8">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-rule px-4 py-3 sm:px-5">
+            <div>
+              <h2 className="font-display text-sm font-semibold tracking-tight text-ink">
+                {getMonthName(month)} {year}
+              </h2>
+              <p className="text-[11px] text-muted">
+                {monthEntryCount}{' '}
+                {monthEntryCount === 1 ? 'entry' : 'entries'} this month
+              </p>
+            </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Calendar Grid Card */}
-        <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs p-4 sm:p-5">
-          {/* Weekday Headers */}
-          <div className="grid grid-cols-7 gap-1 text-center font-semibold text-xs text-slate-500 dark:text-slate-400 pb-2 border-b border-slate-100 dark:border-slate-800">
-            {weekDayLabels.map((day) => (
-              <div key={day} className="py-1">
-                {day}
-              </div>
-            ))}
+            <div className="flex items-center gap-3 text-[10px] text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-income" aria-hidden="true" />
+                Income
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-expense" aria-hidden="true" />
+                Spending
+              </span>
+            </div>
           </div>
 
-          {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1.5 pt-2">
-            {/* Blank leading days */}
-            {Array.from({ length: blankDays }).map((_, idx) => (
-              <div
-                key={`blank-${idx}`}
-                className="h-20 sm:h-24 bg-slate-50/40 dark:bg-slate-800/20 rounded-lg border border-transparent"
-              />
-            ))}
-
-            {/* Actual Month Days */}
-            {Array.from({ length: totalDays }, (_, i) => i + 1).map((dayNumber) => {
-              const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
-              const dayData = dailyDataMap.get(dateStr);
-              const isSelected = selectedDate === dateStr;
-              const isToday = todayStr === dateStr;
-
-              return (
-                <button
-                  key={dayNumber}
-                  onClick={() => setSelectedDate(dateStr)}
-                  className={`h-20 sm:h-24 p-1.5 flex flex-col justify-between text-left rounded-lg border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/20 ring-2 ring-emerald-500/20'
-                      : 'border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
-                  }`}
+          <div className="p-3 sm:p-5">
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+              {weekdayLabels.map((day) => (
+                <div
+                  key={day}
+                  className="pb-1.5 text-center text-[10px] font-medium text-faint"
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span
-                      className={`text-xs font-semibold rounded-md px-1.5 py-0.5 ${
-                        isToday
-                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold'
-                          : 'text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {dayNumber}
+                  {day}
+                </div>
+              ))}
+
+              {Array.from({ length: leadingBlanks }).map((_, index) => (
+                <div
+                  key={`leading-${index}`}
+                  className="min-h-[52px] sm:min-h-[84px]"
+                  aria-hidden="true"
+                />
+              ))}
+
+              {Array.from({ length: totalDays }, (_, index) => index + 1).map((dayNumber) => {
+                const dateStr = `${monthPrefix}-${String(dayNumber).padStart(2, '0')}`;
+                const day = dailyDataMap.get(dateStr);
+                const isSelected = selectedDate === dateStr;
+                const isToday = todayISO === dateStr;
+                const net = day ? day.income - day.expense : 0;
+
+                const ariaLabel = day
+                  ? `${formatDateLong(dateStr)}, ${day.count} ${
+                      day.count === 1 ? 'entry' : 'entries'
+                    }, net ${formatCurrency(net, settings.currency)}`
+                  : `${formatDateLong(dateStr)}, no entries`;
+
+                return (
+                  <button
+                    key={dateStr}
+                    type="button"
+                    onClick={() => setSelectedDate(dateStr)}
+                    aria-pressed={isSelected}
+                    aria-label={ariaLabel}
+                    className={cn(
+                      'relative flex min-h-[52px] flex-col rounded-lg border p-1.5 text-left transition-colors sm:min-h-[84px] sm:p-2',
+                      isSelected
+                        ? 'border-ink bg-surface-2'
+                        : 'border-rule bg-surface hover:border-rule-strong hover:bg-surface-2/60'
+                    )}
+                  >
+                    <span className="flex items-center justify-between gap-1">
+                      <span
+                        className={cn(
+                          'grid size-5 place-items-center rounded-md font-mono text-[10px] font-medium tabular-nums sm:text-[11px]',
+                          isToday ? 'bg-ink text-canvas' : 'text-muted'
+                        )}
+                      >
+                        {dayNumber}
+                      </span>
+
+                      {day && (
+                        <span className="flex items-center gap-0.5" aria-hidden="true">
+                          {day.income > 0 && (
+                            <span className="size-1.5 rounded-full bg-income" />
+                          )}
+                          {day.expense > 0 && (
+                            <span className="size-1.5 rounded-full bg-expense" />
+                          )}
+                        </span>
+                      )}
                     </span>
-                    {dayData && dayData.count > 0 && (
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {dayData.count} tx
+
+                    {day && (
+                      <span
+                        className={cn(
+                          'mt-auto hidden truncate pt-1 font-mono text-[10px] font-medium tabular-nums sm:block',
+                          net < 0 ? 'text-expense' : net > 0 ? 'text-income' : 'text-faint'
+                        )}
+                      >
+                        {net > 0 ? '+' : ''}
+                        {formatCurrency(net, settings.currency)}
                       </span>
                     )}
-                  </div>
+                  </button>
+                );
+              })}
 
-                  {/* Daily Badges */}
-                  <div className="space-y-0.5 overflow-hidden w-full">
-                    {dayData && dayData.income > 0 && (
-                      <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-semibold truncate leading-tight">
-                        +{formatCurrency(dayData.income, settings.currency)}
-                      </div>
-                    )}
-                    {dayData && dayData.expense > 0 && (
-                      <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-rose-600 dark:text-rose-400 font-semibold truncate leading-tight">
-                        -{formatCurrency(dayData.expense, settings.currency)}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Selected Day Transaction Drawer */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Selected Date
-              </span>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 font-mono">
-                {selectedDate}
-              </h3>
+              {Array.from({ length: trailingBlanks }).map((_, index) => (
+                <div
+                  key={`trailing-${index}`}
+                  className="min-h-[52px] sm:min-h-[84px]"
+                  aria-hidden="true"
+                />
+              ))}
             </div>
-            <button
+          </div>
+        </Panel>
+
+        <Panel className="lg:sticky lg:top-6 lg:col-span-4">
+          <div className="flex items-start justify-between gap-3 border-b border-rule px-4 py-4 sm:px-5">
+            <div className="min-w-0">
+              <h2 className="font-display text-[15px] font-semibold leading-tight tracking-tight text-ink">
+                {formatDateLong(selectedDate)}
+              </h2>
+              <p className="mt-1 text-[11px] text-muted">
+                {selectedDay.count === 0
+                  ? 'No entries recorded'
+                  : `${selectedDay.count} ${selectedDay.count === 1 ? 'entry' : 'entries'}`}
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => onOpenAddModalWithDate(selectedDate)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs transition-colors cursor-pointer"
+              className="shrink-0"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Add Entry</span>
-            </button>
+              <Plus className="size-3.5 stroke-[2.5]" />
+              <span>Add</span>
+            </Button>
           </div>
 
-          {/* Daily Totals Summary */}
-          <div className="grid grid-cols-3 gap-2 text-center p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs">
-            <div>
-              <span className="text-slate-500 dark:text-slate-400 text-[11px]">Income</span>
-              <div className="font-mono font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                +{formatCurrency(selectedDayData.income, settings.currency)}
-              </div>
+          <dl className="grid grid-cols-3 divide-x divide-rule border-b border-rule">
+            <div className="px-3 py-3">
+              <dt className="text-[10px] text-muted">Income</dt>
+              <dd className="mt-1 truncate font-mono text-xs font-medium tabular-nums text-income">
+                {selectedDay.income > 0
+                  ? `+${formatCurrency(selectedDay.income, settings.currency)}`
+                  : '—'}
+              </dd>
             </div>
-            <div>
-              <span className="text-slate-500 dark:text-slate-400 text-[11px]">Expenses</span>
-              <div className="font-mono font-bold text-rose-600 dark:text-rose-400 tabular-nums">
-                -{formatCurrency(selectedDayData.expense, settings.currency)}
-              </div>
+            <div className="px-3 py-3">
+              <dt className="text-[10px] text-muted">Expenses</dt>
+              <dd className="mt-1 truncate font-mono text-xs font-medium tabular-nums text-expense">
+                {selectedDay.expense > 0
+                  ? `-${formatCurrency(selectedDay.expense, settings.currency)}`
+                  : '—'}
+              </dd>
             </div>
-            <div>
-              <span className="text-slate-500 dark:text-slate-400 text-[11px]">Net</span>
-              <div className={`font-mono font-bold tabular-nums ${
-                selectedNet < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'
-              }`}>
+            <div className="px-3 py-3">
+              <dt className="text-[10px] text-muted">Net</dt>
+              <dd
+                className={cn(
+                  'mt-1 truncate font-mono text-xs font-medium tabular-nums',
+                  selectedNet < 0 ? 'text-expense' : 'text-ink'
+                )}
+              >
                 {formatCurrency(selectedNet, settings.currency)}
-              </div>
+              </dd>
             </div>
-          </div>
+          </dl>
 
-          {/* Transactions for Selected Day */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Transactions on {selectedDate} ({selectedDayData.items.length})
-            </h4>
+          {selectedDay.items.length === 0 ? (
+            <EmptyState
+              icon={<CalendarDays className="size-5" />}
+              title="Nothing on this day"
+              description={`Add an income or expense entry for ${formatDateShort(selectedDate)}.`}
+              action={
+                <Button
+                  variant="secondary"
+                  onClick={() => onOpenAddModalWithDate(selectedDate)}
+                >
+                  <Plus className="size-4 stroke-[2.5]" />
+                  <span>Add entry</span>
+                </Button>
+              }
+            />
+          ) : (
+            <ul className="max-h-[420px] divide-y divide-rule overflow-y-auto">
+              {selectedDay.items.map((tx) => {
+                const category = categoryMap.get(tx.categoryId);
+                const isIncome = tx.type === 'income';
 
-            {selectedDayData.items.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">
-                <CalendarIcon className="w-6 h-6 mx-auto mb-1.5 opacity-40" />
-                No transactions recorded on this date.
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
-                {selectedDayData.items.map((tx) => {
-                  const cat = catMap.get(tx.categoryId);
-                  const isIncome = tx.type === 'income';
+                return (
+                  <li key={tx.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                    <CategoryAvatar category={category} size="md" />
 
-                  return (
-                    <div
-                      key={tx.id}
-                      className="p-2.5 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-lg flex items-center justify-between gap-2"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-white shrink-0"
-                          style={{ backgroundColor: cat?.color || '#94a3b8' }}
-                        >
-                          <CategoryIcon name={cat?.icon || 'Receipt'} size={13} color="#ffffff" />
-                        </div>
-                        <div className="min-w-0 truncate">
-                          <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
-                            {cat?.name || 'Uncategorized'}
-                          </div>
-                          {tx.description && (
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                              {tx.description}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span
-                          className={`font-mono text-xs font-bold tabular-nums ${
-                            isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                          }`}
-                        >
-                          {isIncome ? '+' : '-'}{formatCurrency(tx.amount, settings.currency)}
-                        </span>
-                        <button
-                          onClick={() => onEditTransaction(tx)}
-                          aria-label="Edit"
-                          className="p-1 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => onDeleteTransaction(tx)}
-                          aria-label="Delete"
-                          className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-ink">
+                        {category?.name || 'Uncategorized'}
+                      </p>
+                      <p className="mt-0.5 truncate text-[10px] text-muted">
+                        {tx.description || tx.paymentMethod || 'No note'}
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+
+                    <span
+                      className={cn(
+                        'shrink-0 font-mono text-[11px] font-medium tabular-nums',
+                        isIncome ? 'text-income' : 'text-expense'
+                      )}
+                    >
+                      {isIncome ? '+' : '-'}
+                      {formatCurrency(tx.amount, settings.currency)}
+                    </span>
+
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <IconButton
+                        label={`Edit ${category?.name || 'entry'}`}
+                        onClick={() => onEditTransaction(tx)}
+                        className="size-8 text-faint hover:text-ink"
+                      >
+                        <Edit2 className="size-3.5" />
+                      </IconButton>
+                      <IconButton
+                        label={`Delete ${category?.name || 'entry'}`}
+                        onClick={() => onDeleteTransaction(tx)}
+                        className="size-8 text-faint hover:bg-expense-soft hover:text-expense"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </IconButton>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Panel>
       </div>
     </div>
   );

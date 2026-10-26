@@ -3,17 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Personal Expense Tracker</title>
-    <meta name="description" content="Modern personal finance and expense tracker with daily transaction logging, monthly balance calculations, spending insights, and budget analytics." />
-    <meta property="og:title" content="Personal Expense Tracker" />
-    <meta property="og:description" content="Modern personal finance and expense tracker with daily transaction logging, monthly balance calculations, spending insights, and budget analytics." />
+    <title>Ledger · Personal Expense Tracker</title>
+    <meta
+      name="description"
+      content="A private, browser-based expense tracker for daily transactions, monthly balances, and spending patterns."
+    />
+    <meta name="theme-color" content="#f2f4ef" />
+    <meta property="og:title" content="Ledger · Personal Expense Tracker" />
+    <meta
+      property="og:description"
+      content="A private, browser-based expense tracker for daily transactions, monthly balances, and spending patterns."
+    />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400..600&family=Public+Sans:wght@400..700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Apply the stored theme before paint to avoid a light flash.
+      try {
+        var saved = JSON.parse(localStorage.getItem('expense_tracker_settings_v1') || '{}');
+        if (saved.theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {
+        /* ignore corrupt storage */
+      }
+    </script>
   </head>
-  <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-emerald-500/20 selection:text-emerald-700 dark:selection:text-emerald-300 min-h-screen">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

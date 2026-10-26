@@ -3,10 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { X, Check } from 'lucide-react';
-import { Transaction, Category, TransactionType, PaymentMethod } from '../types/finance.ts';
-import { CategoryIcon } from './CategoryIcon.tsx';
+import React, { useEffect, useId, useState } from 'react';
+import { ArrowDownLeft, ArrowUpRight, Check } from 'lucide-react';
+import { Category, PaymentMethod, Transaction, TransactionType } from '../types/finance.ts';
+import { CURRENCIES, toISODate } from '../utils/finance.ts';
+import { CategoryAvatar } from './CategoryIcon.tsx';
+import {
+  Button,
+  Field,
+  Modal,
+  cn,
+  inputClass,
+  selectClass,
+} from './ui.tsx';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -38,80 +47,82 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 }) => {
   const isEditing = Boolean(transactionToEdit);
 
+  const formId = useId();
+  const amountId = useId();
+  const dateId = useId();
+  const paymentId = useId();
+  const descriptionId = useId();
+  const categoryGroupId = useId();
+
   const [type, setType] = useState<TransactionType>('expense');
-  const [amount, setAmount] = useState<string>('');
-  const [categoryId, setCategoryId] = useState<string>('');
-  const [date, setDate] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
+  const [amount, setAmount] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [date, setDate] = useState('');
+  const [description, setDescription] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('Cash');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Available categories based on selected transaction type
-  const availableCategories = categories.filter((c) => c.type === type);
+  const availableCategories = categories.filter((category) => category.type === type);
+  const currencySymbol = CURRENCIES[currency]?.symbol || currency;
 
   useEffect(() => {
-    if (isOpen) {
-      if (transactionToEdit) {
-        setType(transactionToEdit.type);
-        setAmount(transactionToEdit.amount.toString());
-        setCategoryId(transactionToEdit.categoryId);
-        setDate(transactionToEdit.transactionDate);
-        setDescription(transactionToEdit.description || '');
-        setPaymentMethod(transactionToEdit.paymentMethod || 'Cash');
-      } else {
-        const todayStr = defaultDate || new Date().toISOString().split('T')[0];
-        setType('expense');
-        setAmount('');
-        setDate(todayStr);
-        setDescription('');
-        setPaymentMethod('Cash');
-        // Pre-select first category for default type
-        const firstExp = categories.find((c) => c.type === 'expense');
-        setCategoryId(firstExp ? firstExp.id : '');
-      }
-      setErrors({});
-      setIsSubmitting(false);
+    if (!isOpen) return;
+
+    if (transactionToEdit) {
+      setType(transactionToEdit.type);
+      setAmount(transactionToEdit.amount.toString());
+      setCategoryId(transactionToEdit.categoryId);
+      setDate(transactionToEdit.transactionDate);
+      setDescription(transactionToEdit.description || '');
+      setPaymentMethod(transactionToEdit.paymentMethod || '');
+    } else {
+      setType('expense');
+      setAmount('');
+      setDate(defaultDate || toISODate());
+      setDescription('');
+      setPaymentMethod('Cash');
+
+      const firstExpense = categories.find((category) => category.type === 'expense');
+      setCategoryId(firstExpense?.id || '');
     }
+
+    setErrors({});
+    setIsSubmitting(false);
   }, [isOpen, transactionToEdit, defaultDate, categories]);
 
-  // When changing type, update category selection if current category does not match new type
-  const handleTypeChange = (newType: TransactionType) => {
-    setType(newType);
-    const validCats = categories.filter((c) => c.type === newType);
-    if (!validCats.some((c) => c.id === categoryId)) {
-      setCategoryId(validCats[0]?.id || '');
+  const handleTypeChange = (nextType: TransactionType) => {
+    setType(nextType);
+
+    const validCategories = categories.filter((category) => category.type === nextType);
+    if (!validCategories.some((category) => category.id === categoryId)) {
+      setCategoryId(validCategories[0]?.id || '');
     }
-    // Clear type error if any
-    setErrors((prev) => ({ ...prev, category: '' }));
+
+    setErrors((previous) => ({ ...previous, category: '' }));
   };
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (isSubmitting) return;
 
-    const newErrors: Record<string, string> = {};
-
-    // Validate Amount
+    const nextErrors: Record<string, string> = {};
     const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      newErrors.amount = 'Amount must be greater than zero.';
+
+    if (!amount.trim() || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      nextErrors.amount = 'Enter an amount greater than zero.';
     }
 
-    // Validate Category
     if (!categoryId) {
-      newErrors.category = 'Category is required.';
+      nextErrors.category = 'Choose a category.';
     }
 
-    // Validate Date
     if (!date) {
-      newErrors.date = 'Date is required.';
+      nextErrors.date = 'Choose a date.';
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       return;
     }
 
@@ -126,9 +137,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           categoryId,
           transactionDate: date,
           description: description.trim() || undefined,
-          paymentMethod: paymentMethod ? (paymentMethod as PaymentMethod) : undefined,
+          paymentMethod: paymentMethod || undefined,
         },
-        transactionToEdit ? transactionToEdit.id : undefined
+        transactionToEdit?.id
       );
       onClose();
     } finally {
@@ -137,184 +148,210 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden transition-all">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isEditing ? 'Edit Transaction' : 'Record Transaction'}
-          </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close dialog"
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={isEditing ? 'Edit transaction' : 'New transaction'}
+      description={
+        isEditing
+          ? 'Update this entry. Monthly totals recalculate immediately.'
+          : 'Record an income or expense. It appears in the ledger right away.'
+      }
+      footer={
+        <>
+          <Button onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form={formId}
+            variant="primary"
+            disabled={isSubmitting}
           >
-            <X className="w-5 h-5" />
-          </button>
+            {isEditing ? 'Save changes' : 'Add transaction'}
+          </Button>
+        </>
+      }
+    >
+      <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <span className="mb-1.5 block text-xs font-semibold text-ink">Type</span>
+          <div
+            className="grid grid-cols-2 gap-1 rounded-lg bg-surface-2 p-0.5"
+            role="group"
+            aria-label="Transaction type"
+          >
+            <button
+              type="button"
+              aria-pressed={type === 'expense'}
+              onClick={() => handleTypeChange('expense')}
+              className={cn(
+                'flex h-9 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors',
+                type === 'expense'
+                  ? 'bg-surface text-expense'
+                  : 'text-muted hover:text-ink'
+              )}
+            >
+              <ArrowUpRight className="size-4" aria-hidden="true" />
+              Expense
+            </button>
+            <button
+              type="button"
+              aria-pressed={type === 'income'}
+              onClick={() => handleTypeChange('income')}
+              className={cn(
+                'flex h-9 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors',
+                type === 'income' ? 'bg-surface text-income' : 'text-muted hover:text-ink'
+              )}
+            >
+              <ArrowDownLeft className="size-4" aria-hidden="true" />
+              Income
+            </button>
+          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Segmented Control for Income / Expense */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Transaction Type
-            </label>
-            <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1">
-              <button
-                type="button"
-                onClick={() => handleTypeChange('expense')}
-                className={`py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                  type === 'expense'
-                    ? 'bg-rose-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                Expense
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTypeChange('income')}
-                className={`py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                  type === 'income'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                Income
-              </button>
-            </div>
-          </div>
-
-          {/* Amount Input */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Amount ({currency}) <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                step="any"
-                min="0.01"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  if (errors.amount) setErrors((prev) => ({ ...prev, amount: '' }));
-                }}
-                className={`w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border rounded-xl font-mono text-base font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors ${
-                  errors.amount ? 'border-rose-400' : 'border-slate-200 dark:border-slate-700'
-                }`}
-              />
-            </div>
-            {errors.amount && (
-              <p className="text-xs text-rose-500 mt-1">{errors.amount}</p>
-            )}
-          </div>
-
-          {/* Category Dropdown */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Category <span className="text-rose-500">*</span>
-            </label>
-            <select
-              value={categoryId}
-              onChange={(e) => {
-                setCategoryId(e.target.value);
-                if (errors.category) setErrors((prev) => ({ ...prev, category: '' }));
-              }}
-              className={`w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer ${
-                errors.category ? 'border-rose-400' : 'border-slate-200 dark:border-slate-700'
-              }`}
+        <Field label={`Amount (${currency})`} htmlFor={amountId} required error={errors.amount}>
+          <div className="relative">
+            <span
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-faint"
+              aria-hidden="true"
             >
-              <option value="" disabled>
-                Select a category
-              </option>
-              {availableCategories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            {errors.category && (
-              <p className="text-xs text-rose-500 mt-1">{errors.category}</p>
+              {currencySymbol}
+            </span>
+            <input
+              id={amountId}
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min="0"
+              value={amount}
+              onChange={(event) => {
+                setAmount(event.target.value);
+                if (errors.amount) setErrors((previous) => ({ ...previous, amount: '' }));
+              }}
+              placeholder={CURRENCIES[currency]?.decimals === 0 ? '0' : '0.00'}
+              aria-invalid={Boolean(errors.amount)}
+              className={cn(
+                inputClass,
+                'h-11 pl-12 font-mono text-base font-medium tabular-nums',
+                errors.amount && 'border-expense'
+              )}
+              data-autofocus
+            />
+          </div>
+        </Field>
+
+        <div>
+          <div className="mb-1.5 flex items-baseline justify-between gap-2">
+            <span id={categoryGroupId} className="text-xs font-semibold text-ink">
+              Category <span className="text-expense">*</span>
+            </span>
+            <span className="text-[10px] text-faint">
+              {availableCategories.length}{' '}
+              {availableCategories.length === 1 ? 'option' : 'options'}
+            </span>
+          </div>
+
+          <div
+            role="group"
+            aria-labelledby={categoryGroupId}
+            className="grid max-h-56 grid-cols-1 gap-1 overflow-y-auto rounded-lg border border-rule bg-surface-2/30 p-1.5 sm:grid-cols-2"
+          >
+            {availableCategories.map((category) => {
+              const selected = categoryId === category.id;
+
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => {
+                    setCategoryId(category.id);
+                    if (errors.category) {
+                      setErrors((previous) => ({ ...previous, category: '' }));
+                    }
+                  }}
+                  className={cn(
+                    'flex min-h-9 items-center gap-2 rounded-md border px-2 py-1.5 text-left text-xs font-medium transition-colors',
+                    selected
+                      ? 'border-ink bg-surface text-ink'
+                      : 'border-transparent text-muted hover:bg-surface hover:text-ink'
+                  )}
+                >
+                  <CategoryAvatar category={category} size="sm" />
+                  <span className="truncate">{category.name}</span>
+                  {selected && <Check className="ml-auto size-3.5 shrink-0" aria-hidden="true" />}
+                </button>
+              );
+            })}
+
+            {availableCategories.length === 0 && (
+              <p className="col-span-full px-2 py-3 text-xs text-faint">
+                No {type} categories yet. Add one in Settings.
+              </p>
             )}
           </div>
 
-          {/* Date Input */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Transaction Date <span className="text-rose-500">*</span>
-            </label>
+          {errors.category && (
+            <p className="mt-1 text-[11px] font-medium text-expense" role="alert">
+              {errors.category}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Date" htmlFor={dateId} required error={errors.date}>
             <input
+              id={dateId}
               type="date"
               value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                if (errors.date) setErrors((prev) => ({ ...prev, date: '' }));
+              onChange={(event) => {
+                setDate(event.target.value);
+                if (errors.date) setErrors((previous) => ({ ...previous, date: '' }));
               }}
-              className={`w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border rounded-xl font-mono text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                errors.date ? 'border-rose-400' : 'border-slate-200 dark:border-slate-700'
-              }`}
+              aria-invalid={Boolean(errors.date)}
+              className={cn(
+                inputClass,
+                'font-mono text-xs',
+                errors.date && 'border-expense'
+              )}
             />
-            {errors.date && (
-              <p className="text-xs text-rose-500 mt-1">{errors.date}</p>
-            )}
-          </div>
+          </Field>
 
-          {/* Payment Method (Optional) */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Payment Method (Optional)
-            </label>
+          <Field label="Payment method" htmlFor={paymentId}>
             <select
+              id={paymentId}
               value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              onChange={(event) =>
+                setPaymentMethod(event.target.value as PaymentMethod | '')
+              }
+              className={selectClass}
             >
+              <option value="">Not specified</option>
               {PAYMENT_METHODS.map((method) => (
                 <option key={method} value={method}>
                   {method}
                 </option>
               ))}
             </select>
-          </div>
+          </Field>
+        </div>
 
-          {/* Description / Note (Optional) */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Description / Notes (Optional)
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Weekly organic market groceries"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-          </div>
-
-          {/* Modal Action Buttons */}
-          <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <Check className="w-4 h-4 stroke-[2.5]" />
-              <span>{isEditing ? 'Save Changes' : 'Record Transaction'}</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <Field
+          label="Note"
+          htmlFor={descriptionId}
+          hint="Optional. A short reminder of what this was for."
+        >
+          <input
+            id={descriptionId}
+            type="text"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Groceries, rent, salary…"
+            className={inputClass}
+          />
+        </Field>
+      </form>
+    </Modal>
   );
 };

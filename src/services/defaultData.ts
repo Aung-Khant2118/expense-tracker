@@ -19,7 +19,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Salary',
     type: 'income',
     icon: 'Briefcase',
-    color: '#10b981', // emerald
+    color: '#2f6b4f', // moss
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -28,7 +28,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Freelance',
     type: 'income',
     icon: 'Laptop',
-    color: '#06b6d4', // cyan
+    color: '#3f7d6a', // pine
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -37,7 +37,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Business',
     type: 'income',
     icon: 'Building2',
-    color: '#3b82f6', // blue
+    color: '#4a7a8c', // teal
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -46,7 +46,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Investment',
     type: 'income',
     icon: 'TrendingUp',
-    color: '#6366f1', // indigo
+    color: '#4b5d8a', // indigo
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -55,7 +55,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Allowance',
     type: 'income',
     icon: 'HandCoins',
-    color: '#8b5cf6', // violet
+    color: '#6b5b8f', // plum
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -64,7 +64,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Gift',
     type: 'income',
     icon: 'Gift',
-    color: '#ec4899', // pink
+    color: '#8a5470', // mauve
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -73,7 +73,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Other Income',
     type: 'income',
     icon: 'Coins',
-    color: '#14b8a6', // teal
+    color: '#7f8c81', // sage
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -84,7 +84,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Food & Drinks',
     type: 'expense',
     icon: 'Utensils',
-    color: '#f59e0b', // amber
+    color: '#c08a32', // ochre
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -93,7 +93,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Transportation',
     type: 'expense',
     icon: 'Car',
-    color: '#f97316', // orange
+    color: '#b35c3c', // brick
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -102,7 +102,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Shopping',
     type: 'expense',
     icon: 'ShoppingBag',
-    color: '#fb7185', // rose
+    color: '#8f5a52', // rosewood
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -111,7 +111,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Housing & Bills',
     type: 'expense',
     icon: 'Home',
-    color: '#ef4444', // red
+    color: '#a4482f', // rust
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -120,7 +120,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Education',
     type: 'expense',
     icon: 'GraduationCap',
-    color: '#a855f7', // purple
+    color: '#3f6f8a', // petrol
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -129,7 +129,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Healthcare',
     type: 'expense',
     icon: 'HeartPulse',
-    color: '#059669', // emerald dark
+    color: '#3f7d6a', // pine
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -138,7 +138,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Entertainment',
     type: 'expense',
     icon: 'Gamepad2',
-    color: '#d946ef', // fuchsia
+    color: '#6f7a3f', // fern
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -147,7 +147,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Travel',
     type: 'expense',
     icon: 'Plane',
-    color: '#0284c7', // sky
+    color: '#4a7a8c', // teal
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -156,7 +156,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Personal Care',
     type: 'expense',
     icon: 'Sparkles',
-    color: '#db2777', // pink
+    color: '#8a6b52', // clay
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
@@ -165,7 +165,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
     name: 'Other Expenses',
     type: 'expense',
     icon: 'Receipt',
-    color: '#64748b', // slate
+    color: '#5d6b60', // stone
     isDefault: true,
     createdAt: '2026-01-01T00:00:00Z',
   },

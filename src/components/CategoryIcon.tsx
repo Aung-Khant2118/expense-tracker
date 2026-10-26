@@ -33,6 +33,7 @@ import {
   CircleDollarSign,
   type LucideIcon,
 } from 'lucide-react';
+import { Category } from '../types/finance.ts';
 
 export const ICON_MAP: Record<string, LucideIcon> = {
   Briefcase,
@@ -74,10 +75,54 @@ interface CategoryIconProps {
 
 export const CategoryIcon: React.FC<CategoryIconProps> = ({
   name,
-  className = 'w-4 h-4',
+  className = 'size-4',
   size = 16,
   color,
 }) => {
   const IconComponent = ICON_MAP[name] || Receipt;
-  return <IconComponent className={className} size={size} style={color ? { color } : undefined} />;
+  return (
+    <IconComponent
+      className={className}
+      size={size}
+      style={color ? { color } : undefined}
+      aria-hidden="true"
+    />
+  );
+};
+
+type AvatarSize = 'sm' | 'md' | 'lg';
+
+const AVATAR_SIZES: Record<AvatarSize, { box: string; icon: number }> = {
+  sm: { box: 'size-7 rounded-lg', icon: 14 },
+  md: { box: 'size-9 rounded-lg', icon: 17 },
+  lg: { box: 'size-10 rounded-xl', icon: 18 },
+};
+
+interface CategoryAvatarProps {
+  category?: Pick<Category, 'icon' | 'color'> | null;
+  size?: AvatarSize;
+  className?: string;
+}
+
+/**
+ * A soft, tinted icon tile. Category colors identify the category without
+ * turning every row into a block of saturated color.
+ */
+export const CategoryAvatar: React.FC<CategoryAvatarProps> = ({
+  category,
+  size = 'md',
+  className = '',
+}) => {
+  const color = category?.color || '#7f8c81';
+  const { box, icon } = AVATAR_SIZES[size];
+
+  return (
+    <span
+      className={`${box} inline-flex shrink-0 items-center justify-center ${className}`}
+      style={{ backgroundColor: `${color}22`, color }}
+      aria-hidden="true"
+    >
+      <CategoryIcon name={category?.icon || 'Receipt'} size={icon} />
+    </span>
+  );
 };

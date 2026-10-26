@@ -65,6 +65,50 @@ export function formatCurrency(
 }
 
 /**
+ * Format a Date as a local YYYY-MM-DD string.
+ * Avoids the UTC drift of toISOString() for users east/west of UTC.
+ */
+export function toISODate(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Parse a YYYY-MM-DD string as a local date (not UTC).
+ */
+function parseISODate(isoDate: string): Date | null {
+  const parts = isoDate.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+  const [year, month, day] = parts;
+  return new Date(year, month - 1, day);
+}
+
+/**
+ * Short, human date for dense rows (e.g. "Oct 24").
+ */
+export function formatDateShort(isoDate: string): string {
+  const date = parseISODate(isoDate);
+  if (!date) return isoDate;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Long date for detail panels (e.g. "Saturday, October 24, 2026").
+ */
+export function formatDateLong(isoDate: string): string {
+  const date = parseISODate(isoDate);
+  if (!date) return isoDate;
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+/**
  * Returns the exact number of days in a given year and month (1-12)
  * Handles leap years properly (e.g. Feb in 2024 has 29 days).
  */

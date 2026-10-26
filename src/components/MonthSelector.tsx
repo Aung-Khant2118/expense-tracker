@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import React, { useId } from 'react';
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMonthName, getNextMonth, getPreviousMonth } from '../utils/finance.ts';
+import { IconButton } from './ui.tsx';
 
 interface MonthSelectorProps {
   year: number;
@@ -14,14 +15,31 @@ interface MonthSelectorProps {
 }
 
 export const MonthSelector: React.FC<MonthSelectorProps> = ({ year, month, onChange }) => {
+  const monthId = useId();
+  const yearId = useId();
+
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
   const isCurrentMonth = year === currentYear && month === currentMonth;
 
+  const years = Array.from(
+    new Set([
+      currentYear - 5,
+      currentYear - 4,
+      currentYear - 3,
+      currentYear - 2,
+      currentYear - 1,
+      currentYear,
+      currentYear + 1,
+      year,
+    ])
+  ).sort((a, b) => a - b);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
   const handlePrevious = () => {
-    const prev = getPreviousMonth(year, month);
-    onChange(prev.year, prev.month);
+    const previous = getPreviousMonth(year, month);
+    onChange(previous.year, previous.month);
   };
 
   const handleNext = () => {
@@ -29,77 +47,72 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({ year, month, onCha
     onChange(next.year, next.month);
   };
 
-  const handleCurrent = () => {
-    onChange(currentYear, currentMonth);
-  };
-
-  // Generate selectable years (-3 to +1)
-  const years = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
-      <div className="flex items-center gap-1.5">
-        <button
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="inline-flex h-9 items-center rounded-lg border border-rule-strong bg-surface">
+        <IconButton
+          label="Previous month"
           onClick={handlePrevious}
-          aria-label="Previous month"
-          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+          className="size-8 rounded-r-none"
         >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
+          <ChevronLeft className="size-4" />
+        </IconButton>
 
-        <div className="flex items-center gap-2 px-2">
-          {/* Month Selector */}
+        <div className="flex items-center px-1">
+          <label htmlFor={monthId} className="sr-only">
+            Month
+          </label>
           <select
+            id={monthId}
             value={month}
-            onChange={(e) => onChange(year, parseInt(e.target.value, 10))}
-            className="text-base font-semibold text-slate-900 dark:text-slate-100 bg-transparent border-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-1 py-0.5"
+            onChange={(event) => onChange(year, parseInt(event.target.value, 10))}
+            className="h-8 cursor-pointer rounded-md bg-transparent px-1 text-sm font-semibold text-ink"
           >
-            {months.map((m) => (
-              <option key={m} value={m} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-                {getMonthName(m)}
+            {months.map((value) => (
+              <option key={value} value={value}>
+                {getMonthName(value)}
               </option>
             ))}
           </select>
 
-          {/* Year Selector */}
+          <label htmlFor={yearId} className="sr-only">
+            Year
+          </label>
           <select
+            id={yearId}
             value={year}
-            onChange={(e) => onChange(parseInt(e.target.value, 10), month)}
-            className="text-base font-semibold text-slate-700 dark:text-slate-300 bg-transparent border-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-1 py-0.5"
+            onChange={(event) => onChange(parseInt(event.target.value, 10), month)}
+            className="h-8 cursor-pointer rounded-md bg-transparent px-1 text-sm font-semibold text-muted"
           >
-            {years.map((y) => (
-              <option key={y} value={y} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-                {y}
+            {years.map((value) => (
+              <option key={value} value={value}>
+                {value}
               </option>
             ))}
           </select>
         </div>
 
-        <button
+        <IconButton
+          label="Next month"
           onClick={handleNext}
-          aria-label="Next month"
-          className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+          className="size-8 rounded-l-none"
         >
-          <ChevronRight className="w-5 h-5" />
-        </button>
+          <ChevronRight className="size-4" />
+        </IconButton>
       </div>
 
-      <div className="flex items-center gap-2">
-        {!isCurrentMonth ? (
-          <button
-            onClick={handleCurrent}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer whitespace-nowrap"
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Jump to Current Month</span>
-          </button>
-        ) : (
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium px-2 py-1">
-            Current Calendar Period
-          </span>
-        )}
-      </div>
+      {isCurrentMonth ? (
+        <span className="hidden text-[11px] font-medium text-faint sm:inline">Current month</span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onChange(currentYear, currentMonth)}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+        >
+          <CalendarDays className="size-3.5" />
+          <span>This month</span>
+        </button>
+      )}
     </div>
   );
 };
