@@ -4,8 +4,14 @@
  */
 
 import React, { useEffect, useId, useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Check } from 'lucide-react';
-import { Category, PaymentMethod, Transaction, TransactionType } from '../types/finance.ts';
+import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Check } from 'lucide-react';
+import {
+  Category,
+  NewTransactionInput,
+  PaymentMethod,
+  Transaction,
+  TransactionType,
+} from '../types/finance.ts';
 import { CURRENCIES, toISODate } from '../utils/finance.ts';
 import { CategoryAvatar } from './CategoryIcon.tsx';
 import {
@@ -20,7 +26,7 @@ import {
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>, editId?: string) => void;
+  onSave: (data: NewTransactionInput, editId?: string) => Promise<void>;
   transactionToEdit?: Transaction | null;
   categories: Category[];
   currency: string;
@@ -62,6 +68,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('Cash');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const availableCategories = categories.filter((category) => category.type === type);
   const currencySymbol = CURRENCIES[currency]?.symbol || currency;
@@ -89,6 +96,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
     setErrors({});
     setIsSubmitting(false);
+    setSubmitError('');
   }, [isOpen, transactionToEdit, defaultDate, categories]);
 
   const handleTypeChange = (nextType: TransactionType) => {
@@ -102,7 +110,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     setErrors((previous) => ({ ...previous, category: '' }));
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (isSubmitting) return;
 
@@ -127,11 +135,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     }
 
     setIsSubmitting(true);
+    setSubmitError('');
 
     try {
-      onSave(
+      await onSave(
         {
-          userId: transactionToEdit?.userId || 'default-user',
           type,
           amount: parsedAmount,
           categoryId,
@@ -142,6 +150,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         transactionToEdit?.id
       );
       onClose();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : 'Could not save this transaction. Try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -174,6 +186,16 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       }
     >
       <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+        {submitError && (
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-expense/25 bg-expense-soft/60 px-3 py-2.5 text-[11px] leading-relaxed text-expense"
+          >
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            <span>{submitError}</span>
+          </div>
+        )}
+
         <div>
           <span className="mb-1.5 block text-xs font-semibold text-ink">Type</span>
           <div

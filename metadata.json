@@ -1,6 +1,6 @@
 {
   "name": "Personal Expense Tracker",
-  "description": "Modern personal finance and expense tracker with daily transaction logging, monthly balance calculations, spending insights, and budget analytics.",
+  "description": "Private, local-first expense tracker with transaction logging, monthly balance calculations, and spending insights.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

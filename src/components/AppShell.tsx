@@ -13,6 +13,7 @@ import {
   Plus,
   Moon,
   Sun,
+  HardDrive,
 } from 'lucide-react';
 import { Button, IconButton, cn } from './ui.tsx';
 
@@ -35,7 +36,13 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-function BrandMark({ inverse = false }: { inverse?: boolean }) {
+export function BrandMark({
+  inverse = false,
+  compact = false,
+}: {
+  inverse?: boolean;
+  compact?: boolean;
+}) {
   return (
     <div className="flex items-center gap-2.5">
       <span
@@ -69,7 +76,8 @@ function BrandMark({ inverse = false }: { inverse?: boolean }) {
         <span
           className={cn(
             'mt-1 block truncate text-[10px] leading-none',
-            inverse ? 'text-sidebar-muted' : 'text-muted'
+            inverse ? 'text-sidebar-muted' : 'text-muted',
+            compact && 'hidden sm:block'
           )}
         >
           Personal expense tracker
@@ -142,6 +150,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           <p className="text-[11px] leading-relaxed text-sidebar-muted">
             Your data stays in this browser. Back it up from Settings.
           </p>
+
           <button
             type="button"
             onClick={onToggleTheme}
@@ -156,8 +165,15 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       {/* Mobile top bar */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-rule bg-canvas/95 px-4 backdrop-blur md:hidden">
-        <BrandMark />
+        <BrandMark compact />
         <div className="flex items-center gap-1.5">
+          <span
+            className="inline-flex items-center gap-1 text-[10px] text-muted"
+            title="Data stays in this browser"
+          >
+            <HardDrive className="size-3.5" aria-hidden="true" />
+            Local
+          </span>
           <IconButton label={themeLabel} onClick={onToggleTheme} className="size-9">
             {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </IconButton>

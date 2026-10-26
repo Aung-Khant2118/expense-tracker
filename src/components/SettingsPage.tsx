@@ -19,7 +19,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import { Category, Transaction, TransactionType, UserSettings } from '../types/finance.ts';
+import { Category, TransactionType, UserSettings } from '../types/finance.ts';
 import { CURRENCIES, formatCurrency, toISODate } from '../utils/finance.ts';
 import { AVAILABLE_ICONS, CategoryAvatar, CategoryIcon } from './CategoryIcon.tsx';
 import {
@@ -36,24 +36,9 @@ import {
   inputClass,
   selectClass,
 } from './ui.tsx';
-import {
-  addCategory,
-  deleteCategory,
-  exportAllDataJSON,
-  exportTransactionsToCSV,
-  importAllDataJSON,
-  resetToDefaultData,
-  triggerDownload,
-  updateCategory,
-} from '../services/storage.ts';
-
-interface SettingsPageProps {
-  settings: UserSettings;
-  onUpdateSettings: (newSettings: UserSettings) => void;
-  categories: Category[];
-  transactions: Transaction[];
-  onReloadData: () => void;
-}
+import { useLedger } from '../data/LedgerProvider.tsx';
+import { buildBackupJSON, parseBackupJSON } from '../utils/backup.ts';
+import { exportTransactionsToCSV, triggerDownload } from '../utils/csv.ts';
 
 interface ColorOption {
   value: string;
@@ -121,13 +106,19 @@ function AboutRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({
-  settings,
-  onUpdateSettings,
-  categories,
-  transactions,
-  onReloadData,
-}) => {
+export const SettingsPage: React.FC = () => {
+  const {
+    settings,
+    categories,
+    transactions,
+    updateSettings,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    importBackup,
+    resetToSample,
+  } = useLedger();
+
   const currencyId = useId();
   const weekStartId = useId();
   const categoryFormId = useId();
@@ -153,6 +144,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [importMessage, setImportMessage] = useState<{ text: string; success: boolean } | null>(
     null
   );
+  const [preferenceError, setPreferenceError] = useState('');
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const filteredCategories = categories.filter(
     (category) => category.type === activeCategoryTab
@@ -193,7 +189,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setIsCategoryModalOpen(true);
   };
 
-  const handleSaveCategory = (event: React.FormEvent) => {
+  const handlePreferenceChange = async (nextSettings: UserSettings) => {
+    setPreferenceError('');
+
+    try {
+      await updateSettings(nextSettings);
+    } catch (error) {
+      setPreferenceError(
+        error instanceof Error ? error.message : 'Could not save this preference.'
+      );
+    }
+  };
+
+  const handleSaveCategory = async (event: React.FormEvent) => {
     event.preventDefault();
     const name = categoryName.trim();
 
@@ -214,24 +222,34 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       return;
     }
 
-    if (editingCategory) {
-      updateCategory(editingCategory.id, {
-        name,
-        type: categoryType,
-        icon: categoryIcon,
-        color: categoryColor,
-      });
-    } else {
-      addCategory({
-        name,
-        type: categoryType,
-        icon: categoryIcon,
-        color: categoryColor,
-      });
-    }
+    setIsSavingCategory(true);
+    setCategoryError('');
 
-    setIsCategoryModalOpen(false);
-    onReloadData();
+    try {
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, {
+          name,
+          type: categoryType,
+          icon: categoryIcon,
+          color: categoryColor,
+        });
+      } else {
+        await addCategory({
+          name,
+          type: categoryType,
+          icon: categoryIcon,
+          color: categoryColor,
+        });
+      }
+
+      setIsCategoryModalOpen(false);
+    } catch (error) {
+      setCategoryError(
+        error instanceof Error ? error.message : 'Could not save this category.'
+      );
+    } finally {
+      setIsSavingCategory(false);
+    }
   };
 
   const handlePromptDeleteCategory = (category: Category) => {
@@ -244,30 +262,34 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setReassignTo(fallbacks[0]?.id || '');
   };
 
-  const handleConfirmCategoryDelete = () => {
+  const handleConfirmCategoryDelete = async () => {
     if (!deletingCategory) return;
 
     const affected = transactions.filter(
-      (tx) => tx.categoryId === deletingCategory.id
+      (transaction) => transaction.categoryId === deletingCategory.id
     ).length;
 
-    if (affected > 0) {
-      const result = deleteCategory(deletingCategory.id, reassignTo);
-      if (!result.success) {
-        setReassignError(result.error || 'Could not reassign these transactions.');
-        return;
-      }
-    } else {
-      deleteCategory(deletingCategory.id);
-    }
+    setIsDeletingCategory(true);
+    setReassignError('');
 
-    setDeletingCategory(null);
-    onReloadData();
+    try {
+      await deleteCategory(
+        deletingCategory.id,
+        affected > 0 ? reassignTo : undefined
+      );
+      setDeletingCategory(null);
+    } catch (error) {
+      setReassignError(
+        error instanceof Error ? error.message : 'Could not reassign these transactions.'
+      );
+    } finally {
+      setIsDeletingCategory(false);
+    }
   };
 
   const handleExportJSON = () => {
     triggerDownload(
-      exportAllDataJSON(),
+      buildBackupJSON({ settings, categories, transactions }),
       `ledger-backup-${toISODate()}.json`,
       'application/json'
     );
@@ -281,29 +303,51 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     );
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (loadEvent) => {
-      const content = loadEvent.target?.result as string;
-      const result = importAllDataJSON(content);
-      setImportMessage({ text: result.message, success: result.success });
+    setIsImporting(true);
+    setImportMessage(null);
 
-      if (result.success) {
-        onReloadData();
-      }
-    };
-
-    reader.readAsText(file);
-    event.target.value = '';
+    try {
+      const backup = parseBackupJSON(await file.text());
+      await importBackup(backup);
+      setImportMessage({
+        text: `Imported ${backup.transactions.length} transactions and ${backup.categories.length} categories.`,
+        success: true,
+      });
+    } catch (error) {
+      setImportMessage({
+        text: error instanceof Error ? error.message : 'Could not import this backup.',
+        success: false,
+      });
+    } finally {
+      setIsImporting(false);
+      input.value = '';
+    }
   };
 
-  const handleResetData = () => {
-    resetToDefaultData();
-    onReloadData();
-    setIsResetOpen(false);
+  const handleResetData = async () => {
+    setIsResetting(true);
+    setImportMessage(null);
+
+    try {
+      await resetToSample();
+      setImportMessage({
+        text: 'The sample ledger has been restored.',
+        success: true,
+      });
+      setIsResetOpen(false);
+    } catch (error) {
+      setImportMessage({
+        text: error instanceof Error ? error.message : 'Could not reset the ledger.',
+        success: false,
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -320,6 +364,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           description="Theme, currency, and calendar preferences."
         />
 
+        {preferenceError && (
+          <div
+            role="alert"
+            className="border-b border-rule bg-expense-soft/60 px-4 py-3 text-[11px] font-medium text-expense sm:px-5"
+          >
+            {preferenceError}
+          </div>
+        )}
+
         <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-2">
           <div className="flex flex-col gap-3 rounded-lg border border-rule bg-surface-2/40 p-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
             <div>
@@ -331,7 +384,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
             <SegmentedControl
               value={settings.theme}
-              onChange={(theme) => onUpdateSettings({ ...settings, theme })}
+              onChange={(theme) => void handlePreferenceChange({ ...settings, theme })}
               options={[
                 {
                   value: 'light',
@@ -360,7 +413,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               id={currencyId}
               value={settings.currency}
               onChange={(event) =>
-                onUpdateSettings({ ...settings, currency: event.target.value })
+                void handlePreferenceChange({ ...settings, currency: event.target.value })
               }
               className={selectClass}
             >
@@ -381,7 +434,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               id={weekStartId}
               value={settings.firstDayOfWeek}
               onChange={(event) =>
-                onUpdateSettings({
+                void handlePreferenceChange({
                   ...settings,
                   firstDayOfWeek: parseInt(event.target.value, 10) as 0 | 1,
                 })
@@ -539,7 +592,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   ref={fileInputRef}
                   type="file"
                   accept=".json,application/json"
-                  onChange={handleFileUpload}
+                  onChange={(event) => void handleFileUpload(event)}
                   className="sr-only"
                   aria-label="Choose a JSON backup to restore"
                 />
@@ -547,9 +600,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={isImporting}
                 >
                   <Upload className="size-3.5" />
-                  <span>Choose file</span>
+                  <span>{isImporting ? 'Restoring…' : 'Choose file'}</span>
                 </Button>
               </>
             }
@@ -566,6 +620,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 size="sm"
                 onClick={() => setIsResetOpen(true)}
                 className="text-expense hover:bg-expense-soft"
+                disabled={isResetting}
               >
                 <RotateCcw className="size-3.5" />
                 <span>Reset data</span>
@@ -613,9 +668,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         }
         footer={
           <>
-            <Button onClick={() => setIsCategoryModalOpen(false)}>Cancel</Button>
-            <Button type="submit" form={categoryFormId} variant="primary">
-              {editingCategory ? 'Save changes' : 'Create category'}
+            <Button onClick={() => setIsCategoryModalOpen(false)} disabled={isSavingCategory}>
+              Cancel
+            </Button>
+            <Button type="submit" form={categoryFormId} variant="primary" disabled={isSavingCategory}>
+              {isSavingCategory
+                ? 'Saving…'
+                : editingCategory
+                  ? 'Save changes'
+                  : 'Create category'}
             </Button>
           </>
         }
@@ -757,16 +818,22 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         size="sm"
         footer={
           <>
-            <Button onClick={() => setDeletingCategory(null)} data-autofocus>
+            <Button onClick={() => setDeletingCategory(null)} disabled={isDeletingCategory} data-autofocus>
               Cancel
             </Button>
             <Button
               variant="danger"
-              onClick={handleConfirmCategoryDelete}
-              disabled={assignedCount > 0 && !reassignTo}
+              onClick={() => void handleConfirmCategoryDelete()}
+              disabled={isDeletingCategory || (assignedCount > 0 && !reassignTo)}
             >
               <Trash2 className="size-3.5" />
-              <span>{assignedCount > 0 ? 'Reassign and delete' : 'Delete category'}</span>
+              <span>
+                {isDeletingCategory
+                  ? 'Deleting…'
+                  : assignedCount > 0
+                    ? 'Reassign and delete'
+                    : 'Delete category'}
+              </span>
             </Button>
           </>
         }
@@ -805,6 +872,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 Create one first, then delete this category.
               </p>
             )}
+            {reassignError && (
+              <p role="alert" className="text-[11px] font-medium text-expense">
+                {reassignError}
+              </p>
+            )}
           </div>
         ) : (
           <div className="flex items-start gap-3">
@@ -832,12 +904,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         size="sm"
         footer={
           <>
-            <Button onClick={() => setIsResetOpen(false)} data-autofocus>
+            <Button onClick={() => setIsResetOpen(false)} disabled={isResetting} data-autofocus>
               Cancel
             </Button>
-            <Button variant="danger" onClick={handleResetData}>
+            <Button variant="danger" onClick={() => void handleResetData()} disabled={isResetting}>
               <RotateCcw className="size-3.5" />
-              <span>Reset data</span>
+              <span>{isResetting ? 'Resetting…' : 'Reset data'}</span>
             </Button>
           </>
         }

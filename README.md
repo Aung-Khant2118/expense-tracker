@@ -1,6 +1,6 @@
 # Ledger — Personal Expense Tracker
 
-A private, local-first expense tracker for daily transactions, monthly balances, and spending patterns. Everything runs in the browser and is stored in `localStorage` — there is no account, backend, or sync service.
+A private, local-first expense tracker for daily transactions, monthly balances, and spending patterns. Open the link, and everything is stored in your browser — no account, no server, no sync service.
 
 Built with React 19, TypeScript, Vite, and Tailwind CSS.
 
@@ -45,14 +45,14 @@ Built with React 19, TypeScript, Vite, and Tailwind CSS.
 
 ## Tech stack
 
-| Layer      | Tools                                                        |
-| ---------- | ------------------------------------------------------------ |
-| UI         | React 19, TypeScript, lucide-react icons                     |
-| Build      | Vite 8, `@vitejs/plugin-react`                               |
-| Styling    | Tailwind CSS 4 with CSS custom properties for theming        |
-| State      | React state, with a small `localStorage` store and listeners |
-| Tests      | Node's `assert` via `tsx`                                    |
-| Fonts      | Bricolage Grotesque, Public Sans, JetBrains Mono (Google Fonts) |
+| Layer   | Tools                                                       |
+| ------- | ----------------------------------------------------------- |
+| UI      | React 19, TypeScript, lucide-react icons                    |
+| Build   | Vite 8, `@vitejs/plugin-react`                              |
+| Styling | Tailwind CSS 4 with CSS custom properties for theming       |
+| State   | React context, backed by a small `localStorage` store       |
+| Tests   | Node's `assert` via `tsx`                                   |
+| Fonts   | Bricolage Grotesque, Public Sans, JetBrains Mono (Google Fonts) |
 
 ## Getting started
 
@@ -60,6 +60,8 @@ Built with React 19, TypeScript, Vite, and Tailwind CSS.
 
 - Node.js 20.19+ or 22.12+ (required by Vite 8)
 - npm
+
+No environment variables, database, or third-party account is required.
 
 ### Install and run
 
@@ -79,7 +81,9 @@ npm run build
 npm run preview
 ```
 
-The production bundle is written to `dist/`.
+The production bundle is written to `dist/` and is fully static, so it deploys as-is to Vercel, Netlify, Cloudflare Pages, GitHub Pages, or any static host. No server or routing rules are required.
+
+> Keeping the same deployment URL matters: browser storage is keyed to the exact origin. Moving from `localhost:3000` to a real domain, or between a preview URL and production, starts with an empty ledger. Use a backup to carry data over.
 
 ## Available scripts
 
@@ -105,10 +109,14 @@ expense-tracker/
 ├─ package.json
 ├─ src/
 │  ├─ main.tsx                # React entry point
-│  ├─ App.tsx                 # App state, routing between pages, modals
+│  ├─ App.tsx                 # Page state, modals, theme, layout
 │  ├─ index.css               # Tailwind import, design tokens, themes
+│  ├─ data/
+│  │  ├─ LedgerProvider.tsx   # Loading, errors, CRUD state, tab sync
+│  │  └─ ledgerStore.ts       # Store interface and ledger data shape
 │  ├─ components/
 │  │  ├─ AppShell.tsx         # Sidebar, mobile navigation, header
+│  │  ├─ FullPageLoader.tsx   # Initial ledger loading state
 │  │  ├─ ui.tsx               # Shared Button, Modal, Field, Panel, etc.
 │  │  ├─ DashboardPage.tsx
 │  │  ├─ SummaryCards.tsx
@@ -124,12 +132,14 @@ expense-tracker/
 │  │  ├─ SettingsPage.tsx
 │  │  └─ CategoryIcon.tsx
 │  ├─ services/
-│  │  ├─ storage.ts           # localStorage CRUD, import/export, subscriptions
+│  │  ├─ localLedger.ts       # localStorage CRUD and store implementation
 │  │  └─ defaultData.ts       # Default categories, settings, sample transactions
 │  ├─ types/
-│  │  └─ finance.ts           # Transaction, Category, summary, and chart types
+│  │  └─ finance.ts           # Transaction, Category, backup, and chart types
 │  └─ utils/
-│     └─ finance.ts           # Pure calculation, date, and currency helpers
+│     ├─ finance.ts           # Pure calculation, date, and currency helpers
+│     ├─ backup.ts            # Backup export and validation
+│     └─ csv.ts               # CSV export and file download
 └─ tests/
    └─ finance.test.ts         # Financial calculation tests
 ```
@@ -138,13 +148,15 @@ expense-tracker/
 
 All application data lives in the browser under three `localStorage` keys:
 
-| Key                                 | Contents                                  |
-| ----------------------------------- | ----------------------------------------- |
-| `expense_tracker_transactions_v1`   | Income and expense entries                |
-| `expense_tracker_categories_v1`     | Income and expense categories             |
+| Key                                 | Contents                                   |
+| ----------------------------------- | ------------------------------------------ |
+| `expense_tracker_transactions_v1`   | Income and expense entries                 |
+| `expense_tracker_categories_v1`     | Income and expense categories              |
 | `expense_tracker_settings_v1`       | Theme, currency, and week-start preference |
 
-`src/services/storage.ts` is the only module that touches storage. It exposes CRUD helpers for transactions and categories, plus `subscribeToStorage` so the UI reloads when data changes. React state is hydrated from storage on startup.
+`src/services/localLedger.ts` is the only module that touches storage. It exposes CRUD helpers for transactions and categories plus a `LedgerStore` object. `src/data/LedgerProvider.tsx` wraps that store in React context, handles loading and error states, updates state optimistically, and reloads when another tab writes to `localStorage`.
+
+Immediately after a change is confirmed in the UI, it is written to `localStorage`. Closing the tab, closing the browser, or restarting the computer does not remove it.
 
 Key calculations are pure functions in `src/utils/finance.ts`:
 
@@ -157,13 +169,12 @@ Key calculations are pure functions in `src/utils/finance.ts`:
 ## Data, privacy, and backups
 
 - Nothing is sent to a server. There is no analytics, authentication, or network persistence.
-- Data is scoped to the current browser and origin. Clearing site data or using private browsing deletes it.
-- Data does **not** sync across devices or browsers.
-- Use **Settings → Save a full backup** to download a JSON archive containing transactions, categories, and preferences.
+- Data is scoped to one browser, one profile, and one origin. It does **not** sync across devices or browsers.
+- The following all start with an empty ledger: a different browser or profile, a different device, `localhost` vs. a deployed domain, a different preview URL, a private/incognito window, or a link opened inside an in-app browser (WhatsApp, Instagram, email previews).
+- Clearing site data deletes the ledger permanently. Safari can also evict script-written storage after about seven days without a visit.
+- Use **Settings → Save a full backup** to download a JSON archive containing transactions, categories, and preferences. This is the only way to move data to another device or recover from cleared storage.
 - Use **Settings → Restore from a backup** to load a JSON archive. Importing replaces the current data in that browser.
 - Use **Export CSV** for a spreadsheet-friendly copy of transactions.
-
-> The project ships `.env.example` from its AI Studio template. The current app is fully client-side and needs no environment variables; `GEMINI_API_KEY` and `APP_URL` are unused. The only variable the tooling reads is the optional `DISABLE_HMR` flag in `vite.config.ts`, which disables HMR and file watching.
 
 ## Tests
 
@@ -181,7 +192,8 @@ The suite covers:
 
 ## Notes and limitations
 
-- Single-user by design; no authentication or multi-user support.
+- Single-user by design; there is no account system or cloud sync.
+- `localStorage` holds roughly 5 MB, which is ample for years of transactions but not for attachments.
 - No recurring transactions, budgets, or attachment uploads yet.
 - Charts are hand-built SVG components, so no charting library is required.
 - The package name in `package.json` is still the template default (`react-example`); the product name shown in the UI is **Ledger**.

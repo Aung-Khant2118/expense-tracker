@@ -44,6 +44,21 @@ export interface UserSettings {
   theme: 'light' | 'dark';
 }
 
+export type NewTransactionInput = Omit<
+  Transaction,
+  'id' | 'userId' | 'createdAt' | 'updatedAt'
+>;
+
+export type NewCategoryInput = Pick<Category, 'name' | 'type' | 'icon' | 'color'>;
+
+export interface LedgerBackup {
+  version?: string;
+  exportDate?: string;
+  settings?: UserSettings;
+  categories: Category[];
+  transactions: Transaction[];
+}
+
 export interface HighestSpendingCategory {
   categoryId: string;
   categoryName: string;

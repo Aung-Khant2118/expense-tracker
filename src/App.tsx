@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AppShell, NavTab } from './components/AppShell.tsx';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, X } from 'lucide-react';
+import { AppShell, type NavTab } from './components/AppShell.tsx';
 import { DashboardPage } from './components/DashboardPage.tsx';
 import { TransactionsPage } from './components/TransactionsPage.tsx';
 import { CalendarPage } from './components/CalendarPage.tsx';
@@ -12,43 +13,38 @@ import { ReportsPage } from './components/ReportsPage.tsx';
 import { SettingsPage } from './components/SettingsPage.tsx';
 import { TransactionModal } from './components/TransactionModal.tsx';
 import { DeleteConfirmModal } from './components/DeleteConfirmModal.tsx';
-import { Transaction, Category, UserSettings } from './types/finance.ts';
-import {
-  getStoredTransactions,
-  getStoredCategories,
-  getStoredSettings,
-  saveSettings,
-  createTransaction,
-  updateTransaction,
-  deleteTransaction,
-  subscribeToStorage,
-} from './services/storage.ts';
+import { LedgerProvider, useLedger } from './data/LedgerProvider.tsx';
+import type { NewTransactionInput, Transaction } from './types/finance.ts';
 import { calculateMonthlySummary, formatCurrency, toISODate } from './utils/finance.ts';
 
-export default function App() {
+function LedgerApp() {
+  const {
+    settings,
+    categories,
+    transactions,
+    updateSettings,
+    createTransaction,
+    updateTransaction,
+    deleteTransaction,
+  } = useLedger();
+
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [now] = useState(() => new Date());
-
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
+  const [actionError, setActionError] = useState('');
 
-  // Storage state
-  const [transactions, setTransactions] = useState<Transaction[]>(() => getStoredTransactions());
-  const [categories, setCategories] = useState<Category[]>(() => getStoredCategories());
-  const [settings, setSettings] = useState<UserSettings>(() => getStoredSettings());
+  const [isTxModalOpen, setIsTxModalOpen] = useState(false);
+  const [txToEdit, setTxToEdit] = useState<Transaction | null>(null);
+  const [modalDefaultDate, setModalDefaultDate] = useState<string | undefined>(undefined);
 
-  const reloadData = useCallback(() => {
-    setTransactions(getStoredTransactions());
-    setCategories(getStoredCategories());
-    setSettings(getStoredSettings());
-  }, []);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [txToDelete, setTxToDelete] = useState<Transaction | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = subscribeToStorage(() => {
-      reloadData();
-    });
-    return unsubscribe;
-  }, [reloadData]);
+  const summary = useMemo(
+    () => calculateMonthlySummary(transactions, categories, selectedYear, selectedMonth),
+    [transactions, categories, selectedYear, selectedMonth]
+  );
 
   // Apply the theme to the document and keep the browser chrome in sync.
   useEffect(() => {
@@ -57,19 +53,13 @@ export default function App() {
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute('content', isDark ? '#0f1511' : '#f2f4ef');
+
+    try {
+      localStorage.setItem('ledger_theme_v1', settings.theme);
+    } catch {
+      // The theme still applies for this session if storage is unavailable.
+    }
   }, [settings.theme]);
-
-  // Modals
-  const [isTxModalOpen, setIsTxModalOpen] = useState(false);
-  const [txToEdit, setTxToEdit] = useState<Transaction | null>(null);
-  const [modalDefaultDate, setModalDefaultDate] = useState<string | undefined>(undefined);
-
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [txToDelete, setTxToDelete] = useState<Transaction | null>(null);
-
-  const summary = useMemo(() => {
-    return calculateMonthlySummary(transactions, categories, selectedYear, selectedMonth);
-  }, [transactions, categories, selectedYear, selectedMonth]);
 
   const handleOpenAddModal = (dateStr?: string) => {
     setTxToEdit(null);
@@ -85,47 +75,44 @@ export default function App() {
     setIsTxModalOpen(true);
   };
 
-  const handleOpenEditModal = (tx: Transaction) => {
-    setTxToEdit(tx);
+  const handleOpenEditModal = (transaction: Transaction) => {
+    setTxToEdit(transaction);
     setModalDefaultDate(undefined);
     setIsTxModalOpen(true);
   };
 
-  const handleSaveTransaction = (
-    data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>,
-    editId?: string
-  ) => {
+  const handleSaveTransaction = async (data: NewTransactionInput, editId?: string) => {
     if (editId) {
-      updateTransaction(editId, data);
+      await updateTransaction(editId, data);
     } else {
-      createTransaction(data);
+      await createTransaction(data);
     }
-    reloadData();
   };
 
-  const handlePromptDeleteTransaction = (tx: Transaction) => {
-    setTxToDelete(tx);
+  const handlePromptDeleteTransaction = (transaction: Transaction) => {
+    setTxToDelete(transaction);
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDeleteTransaction = () => {
-    if (txToDelete) {
-      deleteTransaction(txToDelete.id);
-      setTxToDelete(null);
-      reloadData();
+  const handleConfirmDeleteTransaction = async () => {
+    if (!txToDelete) return;
+    await deleteTransaction(txToDelete.id);
+    setTxToDelete(null);
+  };
+
+  const handleToggleTheme = async () => {
+    setActionError('');
+
+    try {
+      await updateSettings({
+        ...settings,
+        theme: settings.theme === 'dark' ? 'light' : 'dark',
+      });
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : 'Could not update your theme preference.'
+      );
     }
-  };
-
-  const handleUpdateSettings = (newSettings: UserSettings) => {
-    saveSettings(newSettings);
-    setSettings(newSettings);
-  };
-
-  const handleToggleTheme = () => {
-    handleUpdateSettings({
-      ...settings,
-      theme: settings.theme === 'dark' ? 'light' : 'dark',
-    });
   };
 
   return (
@@ -139,7 +126,7 @@ export default function App() {
         onTabChange={setActiveTab}
         onOpenAddModal={() => handleOpenAddModal()}
         theme={settings.theme}
-        onToggleTheme={handleToggleTheme}
+        onToggleTheme={() => void handleToggleTheme()}
       >
         <div className="md:pl-60">
           <main
@@ -147,13 +134,31 @@ export default function App() {
             tabIndex={-1}
             className="mx-auto w-full max-w-[1180px] px-4 pb-24 pt-6 sm:px-6 sm:pt-8 md:pb-10 lg:px-8"
           >
+            {actionError && (
+              <div
+                role="alert"
+                className="mb-5 flex items-start gap-2.5 rounded-lg border border-expense/25 bg-expense-soft/60 px-3.5 py-3 text-xs text-expense"
+              >
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <p className="flex-1 leading-relaxed">{actionError}</p>
+                <button
+                  type="button"
+                  onClick={() => setActionError('')}
+                  className="rounded p-0.5 hover:bg-expense/10"
+                  aria-label="Dismiss error"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            )}
+
             {activeTab === 'dashboard' && (
               <DashboardPage
                 year={selectedYear}
                 month={selectedMonth}
-                onMonthChange={(y, m) => {
-                  setSelectedYear(y);
-                  setSelectedMonth(m);
+                onMonthChange={(year, month) => {
+                  setSelectedYear(year);
+                  setSelectedMonth(month);
                 }}
                 transactions={transactions}
                 categories={categories}
@@ -181,9 +186,9 @@ export default function App() {
               <CalendarPage
                 year={selectedYear}
                 month={selectedMonth}
-                onMonthChange={(y, m) => {
-                  setSelectedYear(y);
-                  setSelectedMonth(m);
+                onMonthChange={(year, month) => {
+                  setSelectedYear(year);
+                  setSelectedMonth(month);
                 }}
                 transactions={transactions}
                 categories={categories}
@@ -202,22 +207,14 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'settings' && (
-              <SettingsPage
-                settings={settings}
-                onUpdateSettings={handleUpdateSettings}
-                categories={categories}
-                transactions={transactions}
-                onReloadData={reloadData}
-              />
-            )}
+            {activeTab === 'settings' && <SettingsPage />}
           </main>
 
           <footer className="border-t border-rule">
             <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-1 px-4 py-5 text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
               <span>Ledger, a private personal expense tracker</span>
               <span>
-                Amounts in {settings.currency}
+                Stored in this browser · Amounts in {settings.currency}
                 {settings.theme === 'dark' ? ' · Dark theme' : ' · Light theme'}
               </span>
             </div>
@@ -237,7 +234,10 @@ export default function App() {
 
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setTxToDelete(null);
+        }}
         onConfirm={handleConfirmDeleteTransaction}
         title="Delete this transaction?"
         message={
@@ -250,5 +250,13 @@ export default function App() {
         }
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LedgerProvider>
+      <LedgerApp />
+    </LedgerProvider>
   );
 }

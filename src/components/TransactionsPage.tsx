@@ -35,7 +35,7 @@ import {
   inputClass,
   selectClass,
 } from './ui.tsx';
-import { exportTransactionsToCSV, triggerDownload } from '../services/storage.ts';
+import { exportTransactionsToCSV, triggerDownload } from '../utils/csv.ts';
 
 interface TransactionsPageProps {
   transactions: Transaction[];

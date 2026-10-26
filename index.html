@@ -25,9 +25,16 @@
     <script>
       // Apply the stored theme before paint to avoid a light flash.
       try {
-        var saved = JSON.parse(localStorage.getItem('expense_tracker_settings_v1') || '{}');
-        if (saved.theme === 'dark') {
+        var theme = localStorage.getItem('ledger_theme_v1');
+        if (!theme) {
+          var saved = JSON.parse(localStorage.getItem('expense_tracker_settings_v1') || '{}');
+          theme = saved.theme;
+        }
+        if (theme === 'dark') {
           document.documentElement.classList.add('dark');
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', '#0f1511');
         }
       } catch (e) {
         /* ignore corrupt storage */
