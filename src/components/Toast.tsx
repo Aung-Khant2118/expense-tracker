@@ -18,7 +18,7 @@ interface ToastProps {
   duration?: number;
 }
 
-export const Toast: React.FC<ToastProps> = ({ toast, onDismiss, duration = 3200 }) => {
+export const Toast: React.FC<ToastProps> = ({ toast, onDismiss, duration = 4000 }) => {
   useEffect(() => {
     if (!toast) return;
 
@@ -29,12 +29,13 @@ export const Toast: React.FC<ToastProps> = ({ toast, onDismiss, duration = 3200 
   if (!toast) return null;
 
   return createPortal(
-    <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[60] flex justify-center px-4 sm:bottom-6 sm:justify-end sm:px-6">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(3.5rem+0.75rem)] z-[60] flex justify-center px-4 sm:bottom-6 sm:top-auto sm:justify-end sm:px-6">
       <div
         key={toast.id}
         role="status"
         aria-live="polite"
-        className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-rule bg-surface px-4 py-3 shadow-lg animate-toast-in motion-reduce:animate-none"
+        aria-atomic="true"
+        className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-rule bg-surface px-4 py-3 shadow-xl animate-toast-in motion-reduce:animate-none"
       >
         <span
           className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-income-soft text-income"
@@ -42,7 +43,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onDismiss, duration = 3200 
         >
           <Check className="size-3.5 stroke-[2.5]" />
         </span>
-        <p className="min-w-0 flex-1 text-xs font-medium leading-relaxed text-ink">
+        <p className="min-w-0 flex-1 text-[13px] font-medium leading-relaxed text-ink">
           {toast.text}
         </p>
         <button
