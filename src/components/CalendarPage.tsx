@@ -136,35 +136,35 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
 
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-6">
         <Panel className="overflow-hidden lg:col-span-8">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-rule px-4 py-3 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b-2 border-ink px-4 py-3 sm:px-5">
             <div>
-              <h2 className="font-display text-sm font-semibold tracking-tight text-ink">
+              <h2 className="font-display text-sm font-black tracking-tight text-ink">
                 {getMonthName(month)} {year}
               </h2>
-              <p className="text-[11px] text-muted">
+              <p className="text-[11px] font-medium text-muted">
                 {monthEntryCount}{' '}
                 {monthEntryCount === 1 ? 'entry' : 'entries'} this month
               </p>
             </div>
 
-            <div className="flex items-center gap-3 text-[10px] text-muted">
+            <div className="flex items-center gap-3 text-[10px] font-semibold text-muted">
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-1.5 rounded-full bg-income" aria-hidden="true" />
+                <span className="size-2 border-2 border-ink bg-income" aria-hidden="true" />
                 Income
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-1.5 rounded-full bg-expense" aria-hidden="true" />
+                <span className="size-2 border-2 border-ink bg-expense" aria-hidden="true" />
                 Spending
               </span>
             </div>
           </div>
 
-          <div className="p-3 sm:p-5">
-            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+          <div className="overflow-hidden">
+            <div className="grid grid-cols-7 gap-[2px] bg-ink">
               {weekdayLabels.map((day) => (
                 <div
                   key={day}
-                  className="pb-1.5 text-center text-[10px] font-medium text-faint"
+                  className="bg-surface-2 px-2 py-2 text-center text-[10px] font-bold text-ink"
                 >
                   {day}
                 </div>
@@ -173,7 +173,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
               {Array.from({ length: leadingBlanks }).map((_, index) => (
                 <div
                   key={`leading-${index}`}
-                  className="min-h-[52px] sm:min-h-[84px]"
+                  className="min-h-[52px] bg-surface sm:min-h-[84px]"
                   aria-hidden="true"
                 />
               ))}
@@ -199,17 +199,19 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
                     aria-pressed={isSelected}
                     aria-label={ariaLabel}
                     className={cn(
-                      'relative flex min-h-[52px] flex-col rounded-lg border p-1.5 text-left transition-colors sm:min-h-[84px] sm:p-2',
-                      isSelected
-                        ? 'border-ink bg-surface-2'
-                        : 'border-rule bg-surface hover:border-rule-strong hover:bg-surface-2/60'
+                      'relative flex min-h-[52px] flex-col p-1.5 text-left transition-colors sm:min-h-[84px] sm:p-2',
+                      isSelected ? 'bg-accent text-accent-ink' : 'bg-surface hover:bg-accent-soft/60'
                     )}
                   >
                     <span className="flex items-center justify-between gap-1">
                       <span
                         className={cn(
-                          'grid size-5 place-items-center rounded-md font-mono text-[10px] font-medium tabular-nums sm:text-[11px]',
-                          isToday ? 'bg-ink text-canvas' : 'text-muted'
+                          'grid size-5 place-items-center font-mono text-[10px] font-bold tabular-nums sm:text-[11px]',
+                          isSelected
+                            ? 'bg-accent-ink text-accent'
+                            : isToday
+                              ? 'bg-ink text-canvas'
+                              : 'text-muted'
                         )}
                       >
                         {dayNumber}
@@ -218,10 +220,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
                       {day && (
                         <span className="flex items-center gap-0.5" aria-hidden="true">
                           {day.income > 0 && (
-                            <span className="size-1.5 rounded-full bg-income" />
+                            <span className="size-2 border border-ink bg-income" />
                           )}
                           {day.expense > 0 && (
-                            <span className="size-1.5 rounded-full bg-expense" />
+                            <span className="size-2 border border-ink bg-expense" />
                           )}
                         </span>
                       )}
@@ -230,8 +232,14 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
                     {day && (
                       <span
                         className={cn(
-                          'mt-auto hidden truncate pt-1 font-mono text-[10px] font-medium tabular-nums sm:block',
-                          net < 0 ? 'text-expense' : net > 0 ? 'text-income' : 'text-faint'
+                          'mt-auto hidden truncate pt-1 font-mono text-[10px] font-semibold tabular-nums sm:block',
+                          isSelected
+                            ? 'text-accent-ink/70'
+                            : net < 0
+                              ? 'text-expense'
+                              : net > 0
+                                ? 'text-income'
+                                : 'text-faint'
                         )}
                       >
                         {net > 0 ? '+' : ''}
@@ -245,7 +253,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
               {Array.from({ length: trailingBlanks }).map((_, index) => (
                 <div
                   key={`trailing-${index}`}
-                  className="min-h-[52px] sm:min-h-[84px]"
+                  className="min-h-[52px] bg-surface sm:min-h-[84px]"
                   aria-hidden="true"
                 />
               ))}
@@ -254,12 +262,12 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
         </Panel>
 
         <Panel className="lg:sticky lg:top-6 lg:col-span-4">
-          <div className="flex items-start justify-between gap-3 border-b border-rule px-4 py-4 sm:px-5">
+          <div className="flex items-start justify-between gap-3 border-b-2 border-ink px-4 py-4 sm:px-5">
             <div className="min-w-0">
-              <h2 className="font-display text-[15px] font-semibold leading-tight tracking-tight text-ink">
+              <h2 className="font-display text-[15px] font-black leading-tight tracking-tight text-ink">
                 {formatDateLong(selectedDate)}
               </h2>
-              <p className="mt-1 text-[11px] text-muted">
+              <p className="mt-1 text-[11px] font-medium text-muted">
                 {selectedDay.count === 0
                   ? 'No entries recorded'
                   : `${selectedDay.count} ${selectedDay.count === 1 ? 'entry' : 'entries'}`}
@@ -267,7 +275,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
             </div>
 
             <Button
-              variant="primary"
+              variant="accent"
               size="sm"
               onClick={() => onOpenAddModalWithDate(selectedDate)}
               className="shrink-0"
@@ -277,28 +285,28 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
             </Button>
           </div>
 
-          <dl className="grid grid-cols-3 divide-x divide-rule border-b border-rule">
+          <dl className="grid grid-cols-3 divide-x-2 divide-ink border-b-2 border-ink">
             <div className="px-3 py-3">
-              <dt className="text-[10px] text-muted">Income</dt>
-              <dd className="mt-1 truncate font-mono text-xs font-medium tabular-nums text-income">
+              <dt className="text-[10px] font-semibold text-muted">Income</dt>
+              <dd className="mt-1 truncate font-mono text-xs font-semibold tabular-nums text-income">
                 {selectedDay.income > 0
                   ? `+${formatCurrency(selectedDay.income, settings.currency)}`
                   : '—'}
               </dd>
             </div>
             <div className="px-3 py-3">
-              <dt className="text-[10px] text-muted">Expenses</dt>
-              <dd className="mt-1 truncate font-mono text-xs font-medium tabular-nums text-expense">
+              <dt className="text-[10px] font-semibold text-muted">Expenses</dt>
+              <dd className="mt-1 truncate font-mono text-xs font-semibold tabular-nums text-expense">
                 {selectedDay.expense > 0
                   ? `-${formatCurrency(selectedDay.expense, settings.currency)}`
                   : '—'}
               </dd>
             </div>
             <div className="px-3 py-3">
-              <dt className="text-[10px] text-muted">Net</dt>
+              <dt className="text-[10px] font-semibold text-muted">Net</dt>
               <dd
                 className={cn(
-                  'mt-1 truncate font-mono text-xs font-medium tabular-nums',
+                  'mt-1 truncate font-mono text-xs font-semibold tabular-nums',
                   selectedNet < 0 ? 'text-expense' : 'text-ink'
                 )}
               >
@@ -323,35 +331,47 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
               }
             />
           ) : (
-            <ul className="max-h-[420px] divide-y divide-rule overflow-y-auto">
+            <ul className="max-h-[420px] divide-y-2 divide-ink/10 overflow-y-auto">
               {selectedDay.items.map((tx) => {
                 const category = categoryMap.get(tx.categoryId);
                 const isIncome = tx.type === 'income';
 
                 return (
-                  <li key={tx.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
-                    <CategoryAvatar category={category} size="md" />
+                  <li
+                    key={tx.id}
+                    className="relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent-soft/60 sm:px-5"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onEditTransaction(tx)}
+                      aria-label={`Edit ${category?.name || 'entry'}`}
+                      className="absolute inset-0 z-0 rounded-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-focus"
+                    />
 
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-ink">
-                        {category?.name || 'Uncategorized'}
-                      </p>
-                      <p className="mt-0.5 truncate text-[10px] text-muted">
-                        {tx.description || tx.paymentMethod || 'No note'}
-                      </p>
+                    <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-center gap-3">
+                      <CategoryAvatar category={category} size="md" />
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-ink">
+                          {category?.name || 'Uncategorized'}
+                        </p>
+                        <p className="mt-0.5 truncate text-[10px] text-muted">
+                          {tx.description || tx.paymentMethod || 'No note'}
+                        </p>
+                      </div>
+
+                      <span
+                        className={cn(
+                          'shrink-0 font-mono text-[11px] font-semibold tabular-nums',
+                          isIncome ? 'text-income' : 'text-expense'
+                        )}
+                      >
+                        {isIncome ? '+' : '-'}
+                        {formatCurrency(tx.amount, settings.currency)}
+                      </span>
                     </div>
 
-                    <span
-                      className={cn(
-                        'shrink-0 font-mono text-[11px] font-medium tabular-nums',
-                        isIncome ? 'text-income' : 'text-expense'
-                      )}
-                    >
-                      {isIncome ? '+' : '-'}
-                      {formatCurrency(tx.amount, settings.currency)}
-                    </span>
-
-                    <div className="flex shrink-0 items-center gap-0.5">
+                    <div className="relative z-10 flex shrink-0 items-center gap-0.5">
                       <IconButton
                         label={`Edit ${category?.name || 'entry'}`}
                         onClick={() => onEditTransaction(tx)}

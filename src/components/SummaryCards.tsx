@@ -27,15 +27,13 @@ function ChangeNote({ change }: { change: Change }) {
   return (
     <div
       className={cn(
-        'mt-2 flex items-center gap-1 text-[11px]',
+        'mt-1.5 flex items-center gap-1 text-[11px] font-semibold',
         change.favorable ? 'text-income' : 'text-expense'
       )}
     >
-      <Icon className="size-3.5 shrink-0" />
-      <span className="font-mono font-medium tabular-nums">
-        {Math.abs(change.percent).toFixed(1)}%
-      </span>
-      <span className="text-muted">vs last month</span>
+      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+      <span className="font-mono tabular-nums">{Math.abs(change.percent).toFixed(1)}%</span>
+      <span className="font-medium text-muted">vs last month</span>
     </div>
   );
 }
@@ -46,16 +44,33 @@ interface MetricProps {
   tone?: 'default' | 'income' | 'expense';
   note?: string;
   change?: Change;
-  className?: string;
 }
 
-function Metric({ label, value, tone = 'default', note, change, className }: MetricProps) {
+function Metric({ label, value, tone = 'default', note, change }: MetricProps) {
   return (
-    <div className={cn('min-w-0 p-4 sm:p-5', className)}>
-      <p className="text-xs font-medium text-muted">{label}</p>
+    <div className="flex items-start justify-between gap-4 border-b-2 border-ink px-5 py-4 last:border-b-0 sm:px-6">
+      <div className="min-w-0">
+        <p className="flex items-center gap-2 text-xs font-semibold text-ink">
+          {tone !== 'default' && (
+            <span
+              className={cn(
+                'size-2.5 shrink-0 border-2 border-ink',
+                tone === 'income' ? 'bg-income' : 'bg-expense'
+              )}
+              aria-hidden="true"
+            />
+          )}
+          {label}
+        </p>
+        {change ? (
+          <ChangeNote change={change} />
+        ) : note ? (
+          <p className="mt-1.5 text-[11px] font-medium leading-relaxed text-faint">{note}</p>
+        ) : null}
+      </div>
       <p
         className={cn(
-          'mt-2 font-mono text-xl font-medium tracking-tight tabular-nums',
+          'shrink-0 font-mono text-[15px] font-semibold tracking-[-0.03em] tabular-nums',
           tone === 'income' && 'text-income',
           tone === 'expense' && 'text-expense',
           tone === 'default' && 'text-ink'
@@ -63,7 +78,6 @@ function Metric({ label, value, tone = 'default', note, change, className }: Met
       >
         {value}
       </p>
-      {change ? <ChangeNote change={change} /> : note ? <p className="mt-2 text-[11px] text-faint">{note}</p> : null}
     </div>
   );
 }
@@ -110,56 +124,52 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, currency })
       : undefined;
 
   return (
-    <section className="overflow-hidden rounded-xl border border-rule bg-surface">
-      <div className="grid xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1.65fr)]">
-        {/* Balance */}
-        <div className="border-b border-rule p-4 sm:p-6 xl:border-b-0 xl:border-r">
-          <p className="text-xs font-medium text-muted">
+    <section className="overflow-hidden rounded-none border-2 border-ink bg-surface shadow-brutal">
+      <div className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        {/* Balance statement */}
+        <div className="bg-accent p-5 text-accent-ink sm:p-7">
+          <p className="text-xs font-semibold">
             {isDeficit ? 'Shortfall this month' : 'Money left this month'}
           </p>
           <p
             className={cn(
-              'mt-2 font-display text-[38px] font-semibold leading-none tracking-tight tabular-nums sm:text-[46px]',
-              isDeficit ? 'text-expense' : 'text-ink'
+              'mt-3 whitespace-nowrap font-display text-[clamp(2.2rem,4.6vw,3.5rem)] font-black leading-[0.9] tracking-[-0.06em] tabular-nums',
+              isDeficit ? 'text-expense' : 'text-accent-ink'
             )}
           >
             {formatCurrency(monthlyBalance, currency)}
           </p>
 
-          <div className="mt-6">
-            <div className="flex items-baseline justify-between gap-3 text-[11px]">
-              <span className="text-muted">
+          <div className="mt-7">
+            <div className="flex items-baseline justify-between gap-3 text-[11px] font-semibold">
+              <span>
                 {expensePercentage !== null
                   ? `${expensePercentage.toFixed(0)}% of income spent`
                   : 'No income recorded yet'}
               </span>
-              <span className="font-mono tabular-nums text-faint">
+              <span className="font-mono tabular-nums">
                 {expensePercentage !== null ? `${Math.min(100, expensePercentage).toFixed(0)}%` : '—'}
               </span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
+            <div className="mt-2 h-3 overflow-hidden rounded-none border-2 border-accent-ink bg-accent-track">
               <div
                 className={cn(
-                  'h-full rounded-full transition-[width] duration-500',
-                  isDeficit
-                    ? 'bg-expense'
-                    : expensePercentage !== null && expensePercentage > 85
-                      ? 'bg-accent'
-                      : 'bg-income'
+                  'h-full transition-[width] duration-500',
+                  isDeficit ? 'bg-expense' : 'bg-accent-ink'
                 )}
                 style={{ width: `${spentWidth}%` }}
               />
             </div>
           </div>
 
-          <p className="mt-4 text-[11px] leading-relaxed text-faint">
+          <p className="mt-4 max-w-md text-[11px] font-medium leading-relaxed text-accent-ink/70">
             Calculated from entries dated {periodText}. Previous month balances are not counted as
             income.
           </p>
         </div>
 
         {/* Supporting figures */}
-        <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3">
+        <dl className="border-t-2 border-ink lg:border-l-2 lg:border-t-0">
           <Metric
             label="Income"
             value={formatCurrency(totalIncome, currency)}
@@ -171,22 +181,24 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, currency })
             value={formatCurrency(totalExpenses, currency)}
             tone="expense"
             change={expenseChange}
-            className="border-t border-rule min-[380px]:border-l min-[380px]:border-t-0"
           />
           <Metric
             label="Daily average"
             value={formatCurrency(dailyAverageExpense, currency)}
-            note={isCurrentMonth ? `Across ${daysElapsedInMonth} days so far` : `Across ${totalDaysInMonth} days`}
-            className="col-span-full border-t border-rule sm:col-span-1 sm:border-l sm:border-t-0"
+            note={
+              isCurrentMonth
+                ? `Across ${daysElapsedInMonth} days so far`
+                : `Across ${totalDaysInMonth} days`
+            }
           />
-        </div>
+        </dl>
       </div>
 
       {isDeficit && (
-        <div className="flex items-start gap-2.5 border-t border-expense/20 bg-expense-soft/60 px-5 py-3 sm:px-6">
-          <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-expense" />
-          <p className="text-xs leading-relaxed text-expense">
-            <span className="font-semibold">
+        <div className="flex items-start gap-2.5 border-t-2 border-ink bg-expense-soft px-5 py-3 sm:px-6">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-expense" aria-hidden="true" />
+          <p className="text-xs font-medium leading-relaxed text-ink">
+            <span className="font-bold">
               Spending is {formatCurrency(Math.abs(monthlyBalance), currency)} above income this
               month.
             </span>{' '}

@@ -85,27 +85,27 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               description="A few numbers worth knowing."
             />
 
-            <dl className="divide-y divide-rule">
+            <dl className="divide-y-2 divide-ink/10">
               <div className="flex items-baseline justify-between gap-4 px-4 py-3.5 sm:px-5">
-                <dt className="text-xs text-muted">Days elapsed</dt>
-                <dd className="font-mono text-xs font-medium tabular-nums text-ink">
+                <dt className="text-xs font-medium text-muted">Days elapsed</dt>
+                <dd className="font-mono text-xs font-semibold tabular-nums text-ink">
                   {summary.isCurrentMonth
                     ? `${summary.daysElapsedInMonth} of ${summary.totalDaysInMonth}`
                     : `${summary.totalDaysInMonth}`}
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-4 px-4 py-3.5 sm:px-5">
-                <dt className="text-xs text-muted">Entries this month</dt>
-                <dd className="font-mono text-xs font-medium tabular-nums text-ink">
+                <dt className="text-xs font-medium text-muted">Entries this month</dt>
+                <dd className="font-mono text-xs font-semibold tabular-nums text-ink">
                   {monthTransactions.length}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4 px-4 py-3.5 sm:px-5">
-                <dt className="text-xs text-muted">Largest expense</dt>
+                <dt className="text-xs font-medium text-muted">Largest expense</dt>
                 <dd className="text-right">
                   {topCategory ? (
                     <>
-                      <p className="text-xs font-medium text-ink">{topCategory.categoryName}</p>
+                      <p className="text-xs font-semibold text-ink">{topCategory.categoryName}</p>
                       <p className="mt-0.5 font-mono text-[11px] tabular-nums text-muted">
                         {formatCurrency(topCategory.amount, settings.currency)}
                       </p>
@@ -117,7 +117,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
             </dl>
 
-            <div className="border-t border-rule p-4">
+            <div className="border-t-2 border-ink p-4">
               <Button
                 variant="secondary"
                 onClick={onNavigateToCalendar}

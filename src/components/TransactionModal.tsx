@@ -189,17 +189,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         {submitError && (
           <div
             role="alert"
-            className="flex items-start gap-2 rounded-lg border border-expense/25 bg-expense-soft/60 px-3 py-2.5 text-[11px] leading-relaxed text-expense"
+            className="flex items-start gap-2 rounded-none border-2 border-ink bg-expense-soft px-3 py-2.5 text-[11px] font-medium leading-relaxed text-ink"
           >
-            <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-expense" aria-hidden="true" />
             <span>{submitError}</span>
           </div>
         )}
 
         <div>
-          <span className="mb-1.5 block text-xs font-semibold text-ink">Type</span>
+          <span className="mb-1.5 block text-xs font-bold text-ink">Type</span>
           <div
-            className="grid grid-cols-2 gap-1 rounded-lg bg-surface-2 p-0.5"
+            className="grid grid-cols-2 gap-0.5 rounded-none border-2 border-ink bg-surface-2 p-0.5"
             role="group"
             aria-label="Transaction type"
           >
@@ -208,9 +208,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               aria-pressed={type === 'expense'}
               onClick={() => handleTypeChange('expense')}
               className={cn(
-                'flex h-9 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors',
+                'flex h-9 items-center justify-center gap-1.5 rounded-none text-xs font-semibold transition-colors',
                 type === 'expense'
-                  ? 'bg-surface text-expense'
+                  ? 'bg-accent text-accent-ink shadow-[1px_1px_0_0_var(--ink)]'
                   : 'text-muted hover:text-ink'
               )}
             >
@@ -222,8 +222,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               aria-pressed={type === 'income'}
               onClick={() => handleTypeChange('income')}
               className={cn(
-                'flex h-9 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors',
-                type === 'income' ? 'bg-surface text-income' : 'text-muted hover:text-ink'
+                'flex h-9 items-center justify-center gap-1.5 rounded-none text-xs font-semibold transition-colors',
+                type === 'income'
+                  ? 'bg-accent text-accent-ink shadow-[1px_1px_0_0_var(--ink)]'
+                  : 'text-muted hover:text-ink'
               )}
             >
               <ArrowDownLeft className="size-4" aria-hidden="true" />
@@ -265,10 +267,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
         <div>
           <div className="mb-1.5 flex items-baseline justify-between gap-2">
-            <span id={categoryGroupId} className="text-xs font-semibold text-ink">
+            <span id={categoryGroupId} className="text-xs font-bold text-ink">
               Category <span className="text-expense">*</span>
             </span>
-            <span className="text-[10px] text-faint">
+            <span className="text-[10px] font-medium text-muted">
               {availableCategories.length}{' '}
               {availableCategories.length === 1 ? 'option' : 'options'}
             </span>
@@ -277,7 +279,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           <div
             role="group"
             aria-labelledby={categoryGroupId}
-            className="grid max-h-56 grid-cols-1 gap-1 overflow-y-auto rounded-lg border border-rule bg-surface-2/30 p-1.5 sm:grid-cols-2"
+            className="grid max-h-56 grid-cols-1 gap-1 overflow-y-auto rounded-none border-2 border-ink bg-surface-2/40 p-1.5 sm:grid-cols-2"
           >
             {availableCategories.map((category) => {
               const selected = categoryId === category.id;
@@ -294,9 +296,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     }
                   }}
                   className={cn(
-                    'flex min-h-9 items-center gap-2 rounded-md border px-2 py-1.5 text-left text-xs font-medium transition-colors',
+                    'flex min-h-9 items-center gap-2 rounded-none border-2 px-2 py-1.5 text-left text-xs font-semibold transition-colors',
                     selected
-                      ? 'border-ink bg-surface text-ink'
+                      ? 'border-ink bg-accent text-accent-ink shadow-brutal-xs'
                       : 'border-transparent text-muted hover:bg-surface hover:text-ink'
                   )}
                 >

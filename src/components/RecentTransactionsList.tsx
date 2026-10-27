@@ -53,7 +53,7 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
           description="Add your first income or expense to start building the month's picture."
         />
       ) : (
-        <ul className="divide-y divide-rule">
+        <ul className="divide-y-2 divide-ink/10">
           {recent.map((tx) => {
             const category = categoryMap.get(tx.categoryId);
             const isIncome = tx.type === 'income';
@@ -61,38 +61,47 @@ export const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({
             return (
               <li
                 key={tx.id}
-                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2/50 sm:px-5"
+                className="relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent-soft/60 sm:px-5"
               >
-                <CategoryAvatar category={category} size="md" />
+                <button
+                  type="button"
+                  onClick={() => onEdit(tx)}
+                  aria-label={`Edit ${category?.name || 'transaction'}`}
+                  className="absolute inset-0 z-0 rounded-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-focus"
+                />
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <span className="truncate text-sm font-medium text-ink">
-                      {category?.name || 'Uncategorized'}
-                    </span>
-                    {tx.paymentMethod && (
-                      <span className="text-[10px] text-faint">{tx.paymentMethod}</span>
-                    )}
+                <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-center gap-3">
+                  <CategoryAvatar category={category} size="md" />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                      <span className="truncate text-sm font-semibold text-ink">
+                        {category?.name || 'Uncategorized'}
+                      </span>
+                      {tx.paymentMethod && (
+                        <span className="text-[10px] font-medium text-muted">{tx.paymentMethod}</span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 truncate text-[11px] text-muted">
+                      <span className="font-mono tabular-nums">
+                        {formatDateShort(tx.transactionDate)}
+                      </span>
+                      {tx.description ? `, ${tx.description}` : ''}
+                    </p>
                   </div>
-                  <p className="mt-0.5 truncate text-[11px] text-muted">
-                    <span className="font-mono tabular-nums">
-                      {formatDateShort(tx.transactionDate)}
-                    </span>
-                    {tx.description ? `, ${tx.description}` : ''}
-                  </p>
+
+                  <span
+                    className={cn(
+                      'shrink-0 font-mono text-xs font-semibold tabular-nums sm:text-sm',
+                      isIncome ? 'text-income' : 'text-expense'
+                    )}
+                  >
+                    {isIncome ? '+' : '-'}
+                    {formatCurrency(tx.amount, currency)}
+                  </span>
                 </div>
 
-                <span
-                  className={cn(
-                    'shrink-0 font-mono text-xs font-medium tabular-nums sm:text-sm',
-                    isIncome ? 'text-income' : 'text-expense'
-                  )}
-                >
-                  {isIncome ? '+' : '-'}
-                  {formatCurrency(tx.amount, currency)}
-                </span>
-
-                <div className="flex shrink-0 items-center gap-0.5">
+                <div className="relative z-10 flex shrink-0 items-center gap-0.5">
                   <IconButton
                     label="Edit transaction"
                     onClick={() => onEdit(tx)}

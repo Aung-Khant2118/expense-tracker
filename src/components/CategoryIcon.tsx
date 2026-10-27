@@ -93,9 +93,9 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
 type AvatarSize = 'sm' | 'md' | 'lg';
 
 const AVATAR_SIZES: Record<AvatarSize, { box: string; icon: number }> = {
-  sm: { box: 'size-7 rounded-lg', icon: 14 },
-  md: { box: 'size-9 rounded-lg', icon: 17 },
-  lg: { box: 'size-10 rounded-xl', icon: 18 },
+  sm: { box: 'size-7', icon: 14 },
+  md: { box: 'size-9', icon: 17 },
+  lg: { box: 'size-10', icon: 18 },
 };
 
 interface CategoryAvatarProps {
@@ -105,8 +105,8 @@ interface CategoryAvatarProps {
 }
 
 /**
- * A soft, tinted icon tile. Category colors identify the category without
- * turning every row into a block of saturated color.
+ * A hard-edged icon tile. Category color lives in the glyph while the tile
+ * keeps the same black outline as the rest of the surface.
  */
 export const CategoryAvatar: React.FC<CategoryAvatarProps> = ({
   category,
@@ -118,8 +118,8 @@ export const CategoryAvatar: React.FC<CategoryAvatarProps> = ({
 
   return (
     <span
-      className={`${box} inline-flex shrink-0 items-center justify-center ${className}`}
-      style={{ backgroundColor: `${color}22`, color }}
+      className={`${box} inline-flex shrink-0 items-center justify-center rounded-none border-2 border-ink bg-surface-2 ${className}`}
+      style={{ color }}
       aria-hidden="true"
     >
       <CategoryIcon name={category?.icon || 'Receipt'} size={icon} />

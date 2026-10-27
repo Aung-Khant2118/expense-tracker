@@ -28,20 +28,29 @@ function FlowRow({ label, amount, percent, tone, currency }: FlowRowProps) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm font-medium text-ink">{label}</span>
+        <span className="flex items-center gap-2 text-sm font-bold text-ink">
+          <span
+            className={cn(
+              'size-3 shrink-0 border-2 border-ink',
+              tone === 'income' ? 'bg-income' : 'bg-expense'
+            )}
+            aria-hidden="true"
+          />
+          {label}
+        </span>
         <span
           className={cn(
-            'font-mono text-sm font-medium tabular-nums',
+            'font-mono text-sm font-semibold tabular-nums',
             tone === 'income' ? 'text-income' : 'text-expense'
           )}
         >
           {formatCurrency(amount, currency)}
         </span>
       </div>
-      <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-surface-2">
+      <div className="mt-2 h-4 overflow-hidden border-2 border-ink bg-surface">
         <div
           className={cn(
-            'h-full rounded-full transition-[width] duration-500',
+            'h-full transition-[width] duration-500 motion-reduce:transition-none',
             tone === 'income' ? 'bg-income' : 'bg-expense'
           )}
           style={{ width: `${width}%` }}
@@ -82,8 +91,8 @@ export const IncomeVsExpensesChart: React.FC<IncomeVsExpensesChartProps> = ({
         action={
           savingsRate ? (
             <div className="text-right">
-              <p className="text-[11px] text-muted">Savings rate</p>
-              <p className="font-mono text-sm font-medium tabular-nums text-income">{savingsRate}%</p>
+              <p className="text-[11px] font-semibold text-muted">Savings rate</p>
+              <p className="font-mono text-sm font-bold tabular-nums text-income">{savingsRate}%</p>
             </div>
           ) : undefined
         }
@@ -105,12 +114,14 @@ export const IncomeVsExpensesChart: React.FC<IncomeVsExpensesChartProps> = ({
           currency={currency}
         />
 
-        <div className="grid grid-cols-2 gap-5 border-t border-rule pt-4">
+        <div className="grid grid-cols-2 gap-5 border-t-2 border-ink pt-4">
           <div>
-            <p className="text-[11px] text-muted">{isDeficit ? 'Net shortfall' : 'Net remaining'}</p>
+            <p className="text-[11px] font-semibold text-muted">
+              {isDeficit ? 'Net shortfall' : 'Net remaining'}
+            </p>
             <p
               className={cn(
-                'mt-1 font-mono text-base font-medium tabular-nums',
+                'mt-1 font-mono text-base font-bold tabular-nums',
                 isDeficit ? 'text-expense' : 'text-ink'
               )}
             >
@@ -119,7 +130,7 @@ export const IncomeVsExpensesChart: React.FC<IncomeVsExpensesChartProps> = ({
           </div>
 
           <div className="min-w-0">
-            <p className="text-[11px] text-muted">Largest category</p>
+            <p className="text-[11px] font-semibold text-muted">Largest category</p>
             {highestSpendingCategory ? (
               <div className="mt-1 flex items-center gap-2">
                 <CategoryAvatar
@@ -130,10 +141,10 @@ export const IncomeVsExpensesChart: React.FC<IncomeVsExpensesChartProps> = ({
                   size="sm"
                 />
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-ink">
+                  <p className="truncate text-xs font-semibold text-ink">
                     {highestSpendingCategory.categoryName}
                   </p>
-                  <p className="font-mono text-[11px] tabular-nums text-faint">
+                  <p className="font-mono text-[11px] font-medium tabular-nums text-muted">
                     {highestSpendingCategory.percentage.toFixed(0)}% of expenses
                   </p>
                 </div>

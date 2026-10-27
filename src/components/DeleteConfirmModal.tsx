@@ -80,7 +80,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       <div className="space-y-3">
         <div className="flex items-start gap-3">
           <span
-            className="grid size-9 shrink-0 place-items-center rounded-lg bg-expense-soft text-expense"
+            className="grid size-9 shrink-0 place-items-center rounded-none border-2 border-ink bg-expense-soft text-expense"
             aria-hidden="true"
           >
             <AlertTriangle className="size-4" />
@@ -88,7 +88,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           <p className="text-sm leading-relaxed text-muted">{message}</p>
         </div>
         {error && (
-          <p role="alert" className="rounded-lg bg-expense-soft/60 px-3 py-2 text-[11px] font-medium text-expense">
+          <p role="alert" className="rounded-none border-2 border-ink bg-expense-soft px-3 py-2 text-[11px] font-medium text-ink">
             {error}
           </p>
         )}

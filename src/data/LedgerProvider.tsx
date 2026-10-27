@@ -221,11 +221,11 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   if (loadError || !value) {
     return (
       <div className="grid min-h-dvh place-items-center bg-canvas px-4">
-        <div className="w-full max-w-md rounded-xl border border-rule bg-surface p-6 text-center">
-          <span className="mx-auto grid size-10 place-items-center rounded-xl bg-expense-soft text-expense">
+        <div className="w-full max-w-md rounded-none border-2 border-ink bg-surface p-6 text-center shadow-brutal">
+          <span className="mx-auto grid size-10 place-items-center rounded-none border-2 border-ink bg-expense-soft text-expense">
             <AlertTriangle className="size-5" />
           </span>
-          <h1 className="mt-4 font-display text-xl font-semibold text-ink">
+          <h1 className="mt-4 font-display text-xl font-black text-ink">
             Could not open FinFlow
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">{loadError}</p>

@@ -60,7 +60,7 @@ function LedgerApp() {
     document.documentElement.classList.toggle('dark', isDark);
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', isDark ? '#0f1511' : '#f2f4ef');
+      ?.setAttribute('content', isDark ? '#161616' : '#f4f1e8');
 
     try {
       localStorage.setItem('ledger_theme_v1', settings.theme);
@@ -156,19 +156,19 @@ function LedgerApp() {
           <main
             id="main"
             tabIndex={-1}
-            className="mx-auto w-full max-w-[1180px] px-4 pb-24 pt-6 sm:px-6 sm:pt-8 md:pb-10 lg:px-8"
+            className="mx-auto w-full max-w-[1240px] px-4 pb-24 pt-6 sm:px-6 sm:pt-8 md:pb-12 lg:px-8"
           >
             {actionError && (
               <div
                 role="alert"
-                className="mb-5 flex items-start gap-2.5 rounded-lg border border-expense/25 bg-expense-soft/60 px-3.5 py-3 text-xs text-expense"
+                className="mb-5 flex items-start gap-2.5 rounded-none border-2 border-ink bg-expense-soft px-3.5 py-3 text-xs text-ink shadow-brutal-xs"
               >
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-expense" aria-hidden="true" />
                 <p className="flex-1 leading-relaxed">{actionError}</p>
                 <button
                   type="button"
                   onClick={() => setActionError('')}
-                  className="rounded p-0.5 hover:bg-expense/10"
+                  className="rounded-none border-2 border-transparent p-0.5 hover:border-ink hover:bg-expense/10"
                   aria-label="Dismiss error"
                 >
                   <X className="size-3.5" />
@@ -234,12 +234,11 @@ function LedgerApp() {
             {activeTab === 'settings' && <SettingsPage />}
           </main>
 
-          <footer className="border-t border-rule">
-            <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-1 px-4 py-5 text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <footer className="border-t-2 border-ink">
+            <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-1 px-4 py-6 text-[11px] font-medium text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
               <span>FinFlow, a private personal expense tracker</span>
               <span>
                 Stored in this browser · Amounts in {settings.currency}
-                {settings.theme === 'dark' ? ' · Dark theme' : ' · Light theme'}
               </span>
             </div>
           </footer>

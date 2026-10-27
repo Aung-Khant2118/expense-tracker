@@ -33,7 +33,7 @@ interface TrendPoint {
 }
 
 const inlineSelectClass =
-  'h-9 cursor-pointer rounded-lg border border-rule-strong bg-surface px-2.5 text-xs font-medium text-ink';
+  'h-9 cursor-pointer rounded-none border-2 border-ink bg-surface px-2.5 text-xs font-semibold text-ink';
 
 const compactNumber = (value: number) =>
   new Intl.NumberFormat('en-US', {
@@ -107,13 +107,13 @@ function AnnualTrendChart({
 
   return (
     <div ref={containerRef}>
-      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted">
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-medium text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-0.5 w-4 rounded-full bg-income" aria-hidden="true" />
+          <span className="h-2 w-4 border-2 border-ink bg-income" aria-hidden="true" />
           Income
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-0.5 w-4 rounded-full bg-expense" aria-hidden="true" />
+          <span className="h-2 w-4 border-2 border-ink bg-expense" aria-hidden="true" />
           Expenses
         </span>
         <span className="ml-auto font-mono text-[10px] text-faint">Amounts in {currency}</span>
@@ -147,7 +147,7 @@ function AnnualTrendChart({
                 y={lineY + 3}
                 textAnchor="end"
                 fontSize="10"
-                fontFamily="ui-monospace, monospace"
+                fontFamily="IBM Plex Mono, ui-monospace, monospace"
                 style={{ fill: 'var(--faint)' }}
               >
                 {compactNumber(value)}
@@ -156,13 +156,13 @@ function AnnualTrendChart({
           );
         })}
 
-        <path d={expenseArea} style={{ fill: 'var(--expense)', opacity: 0.07 }} />
+        <path d={expenseArea} style={{ fill: 'var(--expense)', opacity: 0.05 }} />
 
         <path
           d={incomePath}
           fill="none"
           style={{ stroke: 'var(--income)' }}
-          strokeWidth="2"
+          strokeWidth="3"
           strokeLinejoin="round"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
@@ -171,7 +171,7 @@ function AnnualTrendChart({
           d={expensePath}
           fill="none"
           style={{ stroke: 'var(--expense)' }}
-          strokeWidth="2"
+          strokeWidth="3"
           strokeLinejoin="round"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
@@ -182,8 +182,9 @@ function AnnualTrendChart({
             <circle
               cx={x(index)}
               cy={y(point.income)}
-              r="2.5"
-              style={{ fill: 'var(--income)' }}
+              r="4"
+              strokeWidth="2"
+              style={{ fill: 'var(--income)', stroke: 'var(--ink)' }}
             >
               <title>
                 {`${getMonthName(point.month)} ${year}: income ${formatCurrency(
@@ -195,8 +196,9 @@ function AnnualTrendChart({
             <circle
               cx={x(index)}
               cy={y(point.expenses)}
-              r="2.5"
-              style={{ fill: 'var(--expense)' }}
+              r="4"
+              strokeWidth="2"
+              style={{ fill: 'var(--expense)', stroke: 'var(--ink)' }}
             >
               <title>
                 {`${getMonthName(point.month)} ${year}: expenses ${formatCurrency(
@@ -210,7 +212,7 @@ function AnnualTrendChart({
               y={height - 7}
               textAnchor="middle"
               fontSize="10"
-              fontFamily="ui-monospace, monospace"
+              fontFamily="IBM Plex Mono, ui-monospace, monospace"
               style={{ fill: 'var(--faint)' }}
             >
               {point.monthName}
@@ -223,8 +225,8 @@ function AnnualTrendChart({
           x2={width - padding.right}
           y1={baseY}
           y2={baseY}
-          style={{ stroke: 'var(--rule-strong)' }}
-          strokeWidth="1"
+          style={{ stroke: 'var(--ink)' }}
+          strokeWidth="2"
         />
       </svg>
     </div>
@@ -295,7 +297,7 @@ function CumulativeChart({
               y={lineY + 3}
               textAnchor="end"
               fontSize="10"
-              fontFamily="ui-monospace, monospace"
+              fontFamily="IBM Plex Mono, ui-monospace, monospace"
               style={{ fill: 'var(--faint)' }}
             >
               {compactNumber(value)}
@@ -304,12 +306,12 @@ function CumulativeChart({
         );
       })}
 
-      <path d={area} style={{ fill: 'var(--expense)', opacity: 0.09 }} />
+      <path d={area} style={{ fill: 'var(--expense)', opacity: 0.06 }} />
       <path
         d={line}
         fill="none"
         style={{ stroke: 'var(--expense)' }}
-        strokeWidth="2"
+        strokeWidth="3"
         strokeLinejoin="round"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
@@ -318,8 +320,9 @@ function CumulativeChart({
       <circle
         cx={x(lastIndex)}
         cy={y(finalTotal)}
-        r="3"
-        style={{ fill: 'var(--expense)' }}
+        r="4"
+        strokeWidth="2"
+        style={{ fill: 'var(--expense)', stroke: 'var(--ink)' }}
       />
 
       {tickIndexes.map((index) => (
@@ -329,7 +332,7 @@ function CumulativeChart({
           y={height - 7}
           textAnchor={index === 0 ? 'start' : index === lastIndex ? 'end' : 'middle'}
           fontSize="10"
-          fontFamily="ui-monospace, monospace"
+          fontFamily="IBM Plex Mono, ui-monospace, monospace"
           style={{ fill: 'var(--faint)' }}
         >
           {index === 0 ? 'Day 1' : `Day ${index + 1}`}
@@ -529,7 +532,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           title="Annual cash flow"
           description="Income and expenses for each month of the year."
           action={
-            <label className="inline-flex items-center gap-2 text-[11px] text-muted">
+            <label className="inline-flex items-center gap-2 text-[11px] font-semibold text-muted">
               <span>Year</span>
               <select
                 value={trendYear}
@@ -546,21 +549,21 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           }
         />
 
-        <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2 border-b border-rule px-4 py-3 sm:px-5">
+        <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2 border-b-2 border-ink px-4 py-3 sm:px-5">
           <div className="flex items-baseline gap-2">
-            <dt className="text-[11px] text-muted">Income</dt>
+            <dt className="text-[11px] font-semibold text-muted">Income</dt>
             <dd className="font-mono text-xs font-medium tabular-nums text-income">
               {formatCurrency(yearTotals.income, settings.currency)}
             </dd>
           </div>
           <div className="flex items-baseline gap-2">
-            <dt className="text-[11px] text-muted">Expenses</dt>
+            <dt className="text-[11px] font-semibold text-muted">Expenses</dt>
             <dd className="font-mono text-xs font-medium tabular-nums text-expense">
               {formatCurrency(yearTotals.expenses, settings.currency)}
             </dd>
           </div>
           <div className="flex items-baseline gap-2">
-            <dt className="text-[11px] text-muted">Net</dt>
+            <dt className="text-[11px] font-semibold text-muted">Net</dt>
             <dd
               className={cn(
                 'font-mono text-xs font-medium tabular-nums',
@@ -571,7 +574,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             </dd>
           </div>
           <div className="flex items-baseline gap-2">
-            <dt className="text-[11px] text-muted">Months in surplus</dt>
+            <dt className="text-[11px] font-semibold text-muted">Months in surplus</dt>
             <dd className="font-mono text-xs font-medium tabular-nums text-ink">
               {yearTotals.surplusMonths} of 12
             </dd>
@@ -594,9 +597,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           description="See how one month differs from another, in totals and by category."
         />
 
-        <div className="grid gap-3 border-b border-rule p-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end sm:p-5">
+        <div className="grid gap-3 border-b-2 border-ink p-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end sm:p-5">
           <div>
-            <p className="mb-1.5 text-[11px] font-medium text-ink">Primary month</p>
+            <p className="mb-1.5 text-[11px] font-bold text-ink">Primary month</p>
             <div className="grid grid-cols-[1fr_5.5rem] gap-2">
               <label className="block">
                 <span className="sr-only">Primary month</span>
@@ -634,7 +637,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           </div>
 
           <div>
-            <p className="mb-1.5 text-[11px] font-medium text-ink">Comparison month</p>
+            <p className="mb-1.5 text-[11px] font-bold text-ink">Comparison month</p>
             <div className="grid grid-cols-[1fr_5.5rem] gap-2">
               <label className="block">
                 <span className="sr-only">Comparison month</span>
@@ -669,7 +672,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         </div>
 
         {/* Mobile: stacked comparison */}
-        <ul className="divide-y divide-rule md:hidden">
+        <ul className="divide-y-2 divide-ink/10 md:hidden">
           {comparisonRows.map((row) => (
             <li key={row.label} className="px-4 py-3">
               <div className="flex items-baseline justify-between gap-3">
@@ -699,15 +702,15 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <div className="hidden overflow-x-auto md:block">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-rule text-[11px] text-muted">
-                <th scope="col" className="px-4 py-2.5 font-medium sm:px-5">
+              <tr className="border-b-2 border-ink text-[11px] font-bold text-ink">
+                <th scope="col" className="px-4 py-2.5 sm:px-5">
                   Figure
                 </th>
-                <th scope="col" className="px-4 py-2.5 text-right font-medium">
+                <th scope="col" className="px-4 py-2.5 text-right">
                   <span className="block text-[10px] font-normal text-faint">Primary</span>
                   {shortLabelA}
                 </th>
-                <th scope="col" className="px-4 py-2.5 text-right font-medium">
+                <th scope="col" className="px-4 py-2.5 text-right">
                   <span className="block text-[10px] font-normal text-faint">Comparison</span>
                   {shortLabelB}
                 </th>
@@ -716,7 +719,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-rule">
+            <tbody className="divide-y-2 divide-ink/10">
               {comparisonRows.map((row) => (
                 <tr key={row.label}>
                   <th scope="row" className="px-4 py-2.5 text-xs font-medium text-ink sm:px-5">
@@ -741,9 +744,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
           </table>
         </div>
 
-        <div className="border-t border-rule">
+        <div className="border-t-2 border-ink">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 sm:px-5">
-            <h3 className="font-display text-[13px] font-semibold tracking-tight text-ink">
+            <h3 className="font-display text-[13px] font-black tracking-tight text-ink">
               Spending by category
             </h3>
             <p className="text-[10px] text-faint">Change is primary minus comparison</p>
@@ -756,7 +759,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
             />
           ) : (
             <>
-              <ul className="divide-y divide-rule border-t border-rule md:hidden">
+              <ul className="divide-y-2 divide-ink/10 border-t-2 border-ink md:hidden">
                 {categoryComparisonRows.map((row) => (
                   <li key={row.category.id} className="flex items-center gap-3 px-4 py-3">
                     <CategoryAvatar category={row.category} size="sm" />
@@ -789,17 +792,17 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                 ))}
               </ul>
 
-              <div className="hidden overflow-x-auto border-t border-rule md:block">
+              <div className="hidden overflow-x-auto border-t-2 border-ink md:block">
                 <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-rule text-[11px] text-muted">
-                    <th scope="col" className="px-4 py-2.5 font-medium sm:px-5">
+                  <tr className="border-b-2 border-ink text-[11px] font-bold text-ink">
+                    <th scope="col" className="px-4 py-2.5 sm:px-5">
                       Category
                     </th>
-                    <th scope="col" className="px-4 py-2.5 text-right font-medium">
+                    <th scope="col" className="px-4 py-2.5 text-right">
                       {shortLabelA}
                     </th>
-                    <th scope="col" className="px-4 py-2.5 text-right font-medium">
+                    <th scope="col" className="px-4 py-2.5 text-right">
                       {shortLabelB}
                     </th>
                     <th scope="col" className="px-4 py-2.5 text-right font-medium sm:px-5">
@@ -807,7 +810,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-rule">
+                <tbody className="divide-y-2 divide-ink/10">
                   {categoryComparisonRows.map((row) => (
                     <tr key={row.category.id}>
                       <th scope="row" className="px-4 py-2.5 font-normal sm:px-5">

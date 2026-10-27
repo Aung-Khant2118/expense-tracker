@@ -49,7 +49,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({ year, month, onCha
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="inline-flex h-9 items-center rounded-lg border border-rule-strong bg-surface">
+      <div className="inline-flex h-9 items-center rounded-none border-2 border-ink bg-surface shadow-brutal-xs">
         <IconButton
           label="Previous month"
           onClick={handlePrevious}
@@ -66,7 +66,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({ year, month, onCha
             id={monthId}
             value={month}
             onChange={(event) => onChange(year, parseInt(event.target.value, 10))}
-            className="h-8 cursor-pointer rounded-md bg-transparent px-1 text-sm font-semibold text-ink"
+            className="h-8 cursor-pointer rounded-none bg-transparent px-1 text-sm font-bold text-ink"
           >
             {months.map((value) => (
               <option key={value} value={value}>
@@ -82,7 +82,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({ year, month, onCha
             id={yearId}
             value={year}
             onChange={(event) => onChange(parseInt(event.target.value, 10), month)}
-            className="h-8 cursor-pointer rounded-md bg-transparent px-1 text-sm font-semibold text-muted"
+            className="h-8 cursor-pointer rounded-none bg-transparent px-1 font-mono text-sm font-semibold text-muted"
           >
             {years.map((value) => (
               <option key={value} value={value}>
@@ -102,12 +102,12 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({ year, month, onCha
       </div>
 
       {isCurrentMonth ? (
-        <span className="hidden text-[11px] font-medium text-faint sm:inline">Current month</span>
+        <span className="hidden text-[11px] font-semibold text-muted sm:inline">Current month</span>
       ) : (
         <button
           type="button"
           onClick={() => onChange(currentYear, currentMonth)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+          className="inline-flex h-9 items-center gap-1.5 rounded-none border-2 border-transparent px-2.5 text-xs font-semibold text-muted transition-colors hover:border-ink hover:bg-surface-2 hover:text-ink"
         >
           <CalendarDays className="size-3.5" />
           <span>This month</span>

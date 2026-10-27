@@ -19,21 +19,23 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent' | '
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 const BUTTON_BASE =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors disabled:pointer-events-none disabled:opacity-45';
+  'inline-flex items-center justify-center gap-2 rounded-none border-2 font-semibold transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:pointer-events-none disabled:opacity-40';
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-ink text-canvas hover:bg-ink/90',
-  secondary: 'border border-rule-strong bg-surface text-ink hover:bg-surface-2',
-  ghost: 'text-muted hover:bg-surface-2 hover:text-ink',
-  danger: 'bg-expense text-surface hover:bg-expense/90',
-  accent: 'bg-accent text-sidebar hover:bg-accent/90',
-  quiet: 'text-muted hover:text-ink',
+  primary: 'border-ink bg-ink text-canvas shadow-brutal-xs hover:-translate-y-0.5',
+  secondary:
+    'border-ink bg-surface text-ink shadow-brutal-xs hover:-translate-y-0.5 hover:bg-surface-2',
+  ghost: 'border-transparent text-ink hover:bg-surface-2',
+  danger: 'border-ink bg-expense text-white shadow-brutal-xs hover:-translate-y-0.5',
+  accent:
+    'border-ink bg-accent text-accent-ink shadow-brutal-xs hover:-translate-y-0.5',
+  quiet: 'border-transparent text-muted hover:text-ink',
 };
 
 const BUTTON_SIZES: Record<ButtonSize, string> = {
   sm: 'h-8 px-3 text-xs',
-  md: 'h-9 px-3.5 text-xs sm:text-sm',
-  lg: 'h-10 px-4 text-sm',
+  md: 'h-10 px-4 text-sm',
+  lg: 'h-11 px-5 text-sm',
   icon: 'size-9',
 };
 
@@ -95,7 +97,13 @@ interface PanelProps extends React.HTMLAttributes<HTMLElement> {
 
 export function Panel({ className, children, ...props }: PanelProps) {
   return (
-    <section className={cn('rounded-xl border border-rule bg-surface', className)} {...props}>
+    <section
+      className={cn(
+        'rounded-none border-2 border-ink bg-surface shadow-brutal-sm',
+        className
+      )}
+      {...props}
+    >
       {children}
     </section>
   );
@@ -112,12 +120,12 @@ export function PanelHeader({ title, description, action, className }: PanelHead
   return (
     <div
       className={cn(
-        'flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-rule px-5 py-4',
+        'flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b-2 border-ink px-5 py-4',
         className
       )}
     >
       <div className="min-w-0">
-        <h2 className="font-display text-[15px] font-semibold leading-tight tracking-tight text-ink">
+        <h2 className="font-display text-[15px] font-black leading-tight tracking-[-0.02em] text-ink">
           {title}
         </h2>
         {description && <p className="mt-1 text-xs leading-relaxed text-muted">{description}</p>}
@@ -138,15 +146,17 @@ export function PageHeader({ title, description, actions, className }: PageHeade
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between',
+        'flex flex-col gap-4 border-b-[3px] border-ink pb-5 sm:flex-row sm:items-end sm:justify-between',
         className
       )}
     >
       <div className="max-w-2xl">
-        <h1 className="font-display text-[28px] font-semibold leading-[1.08] tracking-tight text-ink sm:text-[32px]">
+        <h1 className="font-display text-[30px] font-black leading-[0.95] tracking-[-0.05em] text-ink sm:text-[38px]">
           {title}
         </h1>
-        {description && <p className="mt-1.5 text-sm text-muted">{description}</p>}
+        {description && (
+          <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-muted">{description}</p>
+        )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -174,7 +184,10 @@ export function SegmentedControl<T extends string>({
     <div
       role="group"
       aria-label={ariaLabel}
-      className={cn('inline-flex items-center gap-0.5 rounded-lg bg-surface-2 p-0.5', className)}
+      className={cn(
+        'inline-flex items-center gap-0.5 rounded-none border-2 border-ink bg-surface-2 p-0.5',
+        className
+      )}
     >
       {options.map((option) => {
         const active = option.value === value;
@@ -185,9 +198,11 @@ export function SegmentedControl<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-semibold transition-colors',
+              'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-none font-semibold transition-[background-color,color,box-shadow]',
               size === 'sm' ? 'h-7 px-2.5 text-[11px]' : 'h-8 px-3 text-xs',
-              active ? 'bg-ink text-canvas' : 'text-muted hover:text-ink'
+              active
+                ? 'bg-accent text-accent-ink shadow-[1px_1px_0_0_var(--ink)]'
+                : 'text-muted hover:text-ink'
             )}
           >
             {option.icon}
@@ -204,12 +219,12 @@ export function SegmentedControl<T extends string>({
 /* ------------------------------------------------------------------ */
 
 export const inputClass =
-  'h-10 w-full rounded-lg border border-rule-strong bg-surface px-3 text-sm text-ink placeholder:text-faint transition-colors';
+  'h-10 w-full rounded-none border-2 border-ink bg-surface px-3 text-sm font-medium text-ink placeholder:text-faint transition-[box-shadow,background-color] focus:shadow-brutal-xs';
 
 export const selectClass = cn(inputClass, 'cursor-pointer pr-8');
 
 export const textareaClass =
-  'min-h-20 w-full rounded-lg border border-rule-strong bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint transition-colors';
+  'min-h-20 w-full rounded-none border-2 border-ink bg-surface px-3 py-2 text-sm font-medium text-ink placeholder:text-faint transition-[box-shadow,background-color] focus:shadow-brutal-xs';
 
 interface FieldProps {
   label: string;
@@ -232,7 +247,7 @@ export function Field({
 }: FieldProps) {
   return (
     <div className={className}>
-      <label htmlFor={htmlFor} className="mb-1.5 block text-xs font-semibold text-ink">
+      <label htmlFor={htmlFor} className="mb-1.5 block text-[12px] font-semibold text-ink">
         {label}
         {required && <span className="ml-0.5 text-expense">*</span>}
       </label>
@@ -263,11 +278,11 @@ export function EmptyState({ icon, title, description, action, className }: Empt
   return (
     <div className={cn('flex flex-col items-center justify-center px-6 py-12 text-center', className)}>
       {icon && (
-        <div className="mb-3 grid size-10 place-items-center rounded-xl bg-surface-2 text-muted">
+        <div className="mb-3 grid size-9 place-items-center rounded-none border-2 border-ink bg-accent-soft text-ink">
           {icon}
         </div>
       )}
-      <h3 className="font-display text-sm font-semibold text-ink">{title}</h3>
+      <h3 className="font-display text-sm font-black text-ink">{title}</h3>
       {description && <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
@@ -402,15 +417,15 @@ export function Modal({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
-          'relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-xl border border-rule bg-surface shadow-2xl animate-modal-in sm:rounded-xl',
+          'relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-none border-[3px] border-ink bg-surface shadow-brutal-lg animate-modal-in',
           MODAL_SIZES[size]
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-rule px-5 py-4 sm:px-6">
+        <div className="flex items-start justify-between gap-4 border-b-2 border-ink px-5 py-4 sm:px-6">
           <div className="min-w-0">
             <h2
               id={titleId}
-              className="font-display text-lg font-semibold tracking-tight text-ink"
+              className="font-display text-lg font-black tracking-[-0.03em] text-ink"
             >
               {title}
             </h2>
@@ -428,7 +443,7 @@ export function Modal({
         <div className="overflow-y-auto px-5 py-5 sm:px-6">{children}</div>
 
         {footer && (
-          <div className="flex flex-col gap-2 border-t border-rule px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+          <div className="flex flex-col gap-2 border-t-2 border-ink px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
             {footer}
           </div>
         )}

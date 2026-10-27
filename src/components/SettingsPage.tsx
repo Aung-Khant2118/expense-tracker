@@ -80,15 +80,15 @@ function DataRow({ icon, title, description, action, danger }: DataRowProps) {
       <div className="flex items-start gap-3">
         <span
           className={cn(
-            'grid size-9 shrink-0 place-items-center rounded-lg',
-            danger ? 'bg-expense-soft text-expense' : 'bg-surface-2 text-muted'
+            'grid size-9 shrink-0 place-items-center rounded-none border-2 border-ink',
+            danger ? 'bg-expense-soft text-expense' : 'bg-accent-soft text-ink'
           )}
           aria-hidden="true"
         >
           {icon}
         </span>
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-ink sm:text-sm">{title}</p>
+          <p className="text-xs font-bold text-ink sm:text-sm">{title}</p>
           <p className="mt-0.5 max-w-md text-[11px] leading-relaxed text-muted">{description}</p>
         </div>
       </div>
@@ -100,8 +100,8 @@ function DataRow({ icon, title, description, action, danger }: DataRowProps) {
 function AboutRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 px-4 py-3 sm:px-5">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="text-right text-xs font-medium text-ink">{value}</dd>
+      <dt className="text-xs font-medium text-muted">{label}</dt>
+      <dd className="text-right text-xs font-semibold text-ink">{value}</dd>
     </div>
   );
 }
@@ -367,18 +367,18 @@ export const SettingsPage: React.FC = () => {
         {preferenceError && (
           <div
             role="alert"
-            className="border-b border-rule bg-expense-soft/60 px-4 py-3 text-[11px] font-medium text-expense sm:px-5"
+            className="border-b-2 border-ink bg-expense-soft px-4 py-3 text-[11px] font-semibold text-expense sm:px-5"
           >
             {preferenceError}
           </div>
         )}
 
         <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-2">
-          <div className="flex flex-col gap-3 rounded-lg border border-rule bg-surface-2/40 p-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
+          <div className="flex flex-col gap-3 rounded-none border-2 border-ink bg-surface-2/50 p-4 sm:flex-row sm:items-center sm:justify-between lg:col-span-2">
             <div>
-              <p className="text-xs font-semibold text-ink">Theme</p>
+              <p className="text-xs font-bold text-ink">Theme</p>
               <p className="mt-0.5 text-[11px] text-muted">
-                Follow your environment with a light paper or dark forest canvas.
+                Follow your environment with a light or dark canvas.
               </p>
             </div>
 
@@ -495,12 +495,12 @@ export const SettingsPage: React.FC = () => {
                 return (
                   <li
                     key={category.id}
-                    className="flex items-center gap-3 rounded-lg border border-rule bg-surface px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-none border-2 border-ink bg-surface px-3 py-2.5 shadow-brutal-xs"
                   >
                     <CategoryAvatar category={category} size="md" />
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ink">{category.name}</p>
+                      <p className="truncate text-sm font-semibold text-ink">{category.name}</p>
                       <p className="text-[11px] text-muted">
                         {usageCount} {usageCount === 1 ? 'transaction' : 'transactions'}
                       </p>
@@ -542,17 +542,17 @@ export const SettingsPage: React.FC = () => {
             role="status"
             aria-live="polite"
             className={cn(
-              'border-b border-rule px-4 py-3 text-[11px] font-medium sm:px-5',
+              'border-b-2 border-ink px-4 py-3 text-[11px] font-semibold sm:px-5',
               importMessage.success
-                ? 'bg-income-soft/60 text-income'
-                : 'bg-expense-soft/60 text-expense'
+                ? 'bg-income-soft text-income'
+                : 'bg-expense-soft text-expense'
             )}
           >
             {importMessage.text}
           </div>
         )}
 
-        <div className="divide-y divide-rule">
+        <div className="divide-y-2 divide-ink/10">
           <DataRow
             icon={<FileText className="size-4" />}
             title="Export transactions as CSV"
@@ -637,7 +637,7 @@ export const SettingsPage: React.FC = () => {
           description="A private, local-first expense tracker."
         />
 
-        <dl className="divide-y divide-rule">
+        <dl className="divide-y-2 divide-ink/10">
           <AboutRow label="Storage" value="This browser only" />
           <AboutRow
             label="Transactions"
@@ -647,7 +647,7 @@ export const SettingsPage: React.FC = () => {
           <AboutRow label="Currency display" value={formatCurrency(1250000, settings.currency)} />
         </dl>
 
-        <div className="flex items-start gap-2.5 border-t border-rule p-4 text-[11px] leading-relaxed text-muted sm:p-5">
+        <div className="flex items-start gap-2.5 border-t-2 border-ink p-4 text-[11px] font-medium leading-relaxed text-muted sm:p-5">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-income" aria-hidden="true" />
           <p>
             Nothing is sent to a server. Export a JSON backup before clearing browser data or
@@ -703,9 +703,9 @@ export const SettingsPage: React.FC = () => {
           </Field>
 
           <div>
-            <span className="mb-1.5 block text-xs font-semibold text-ink">Type</span>
+            <span className="mb-1.5 block text-xs font-bold text-ink">Type</span>
             <div
-              className="grid grid-cols-2 gap-1 rounded-lg bg-surface-2 p-0.5"
+              className="grid grid-cols-2 gap-0.5 rounded-none border-2 border-ink bg-surface-2 p-0.5"
               role="group"
               aria-label="Category type"
             >
@@ -716,9 +716,9 @@ export const SettingsPage: React.FC = () => {
                   aria-pressed={categoryType === type}
                   onClick={() => setCategoryType(type)}
                   className={cn(
-                    'h-8 rounded-md text-xs font-semibold transition-colors',
+                    'h-8 rounded-none text-xs font-semibold transition-colors',
                     categoryType === type
-                      ? 'bg-surface text-ink'
+                      ? 'bg-accent text-accent-ink shadow-[1px_1px_0_0_var(--ink)]'
                       : 'text-muted hover:text-ink'
                   )}
                 >
@@ -729,8 +729,8 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div>
-            <span className="mb-1.5 block text-xs font-semibold text-ink">Icon</span>
-            <div className="grid max-h-36 grid-cols-7 gap-1 overflow-y-auto rounded-lg border border-rule bg-surface p-1.5 sm:grid-cols-9">
+            <span className="mb-1.5 block text-xs font-bold text-ink">Icon</span>
+            <div className="grid max-h-36 grid-cols-7 gap-1 overflow-y-auto rounded-none border-2 border-ink bg-surface p-1.5 sm:grid-cols-9">
               {AVAILABLE_ICONS.map((iconKey) => {
                 const selected = categoryIcon === iconKey;
 
@@ -742,10 +742,10 @@ export const SettingsPage: React.FC = () => {
                     aria-label={`Use ${iconKey} icon`}
                     aria-pressed={selected}
                     className={cn(
-                      'grid size-8 place-items-center rounded-md transition-colors',
+                      'grid size-8 place-items-center rounded-none border-2 transition-colors',
                       selected
-                        ? 'bg-ink text-canvas'
-                        : 'text-muted hover:bg-surface-2 hover:text-ink'
+                        ? 'border-ink bg-ink text-canvas'
+                        : 'border-transparent text-muted hover:border-ink hover:bg-surface-2 hover:text-ink'
                     )}
                   >
                     <CategoryIcon name={iconKey} size={15} />
@@ -756,7 +756,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div>
-            <span className="mb-1.5 block text-xs font-semibold text-ink">Color</span>
+            <span className="mb-1.5 block text-xs font-bold text-ink">Color</span>
             <div className="flex flex-wrap gap-2">
               {colorOptions.map((option) => {
                 const selected = categoryColor === option.value;
@@ -770,10 +770,10 @@ export const SettingsPage: React.FC = () => {
                     aria-pressed={selected}
                     style={{ backgroundColor: option.value }}
                     className={cn(
-                      'grid size-7 place-items-center rounded-full transition-transform',
+                      'grid size-7 place-items-center rounded-none border-2 border-ink transition-transform',
                       selected
                         ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface'
-                        : 'hover:scale-110'
+                        : 'hover:-translate-y-0.5'
                     )}
                   >
                     {selected && <Check className="size-3.5 text-white" />}
@@ -783,15 +783,15 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 rounded-lg border border-rule bg-surface-2/40 px-3 py-2.5">
+          <div className="flex items-center gap-2.5 rounded-none border-2 border-ink px-3 py-2.5">
             <CategoryAvatar category={{ icon: categoryIcon, color: categoryColor }} />
             <div className="min-w-0">
-              <p className="text-[10px] text-muted">Preview</p>
-              <p className="truncate text-sm font-medium text-ink">
+              <p className="text-[10px] font-semibold text-muted">Preview</p>
+              <p className="truncate text-sm font-semibold text-ink">
                 {categoryName.trim() || 'Category name'}
               </p>
             </div>
-            <span className="ml-auto shrink-0 text-[10px] capitalize text-faint">
+            <span className="ml-auto shrink-0 text-[10px] font-medium capitalize text-muted">
               {categoryType}
             </span>
           </div>
@@ -840,7 +840,7 @@ export const SettingsPage: React.FC = () => {
       >
         {assignedCount > 0 ? (
           <div className="space-y-4">
-            <div className="flex items-start gap-2.5 rounded-lg border border-accent/30 bg-accent-soft/50 p-3">
+            <div className="flex items-start gap-2.5 rounded-none border-2 border-ink bg-accent-soft p-3">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
               <p className="text-[11px] leading-relaxed text-ink">
                 These transactions will keep their amounts and dates, but move to the category you
@@ -881,7 +881,7 @@ export const SettingsPage: React.FC = () => {
         ) : (
           <div className="flex items-start gap-3">
             <span
-              className="grid size-9 shrink-0 place-items-center rounded-lg bg-expense-soft text-expense"
+              className="grid size-9 shrink-0 place-items-center rounded-none border-2 border-ink bg-expense-soft text-expense"
               aria-hidden="true"
             >
               <AlertTriangle className="size-4" />
@@ -916,7 +916,7 @@ export const SettingsPage: React.FC = () => {
       >
         <div className="flex items-start gap-3">
           <span
-            className="grid size-9 shrink-0 place-items-center rounded-lg bg-expense-soft text-expense"
+            className="grid size-9 shrink-0 place-items-center rounded-none border-2 border-ink bg-expense-soft text-expense"
             aria-hidden="true"
           >
             <AlertTriangle className="size-4" />

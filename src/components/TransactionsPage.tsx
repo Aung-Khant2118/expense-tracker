@@ -231,10 +231,10 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
 
       <Panel className="overflow-hidden">
         {/* Search and filters */}
-        <div className="border-b border-rule p-4 sm:p-5">
+        <div className="border-b-2 border-ink p-4 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full lg:max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink" />
               <label htmlFor="transaction-search" className="sr-only">
                 Search transactions
               </label>
@@ -272,7 +272,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
                 <SlidersHorizontal className="size-4" />
                 <span>Filters</span>
                 {advancedFilterCount > 0 && (
-                  <span className="grid size-4 place-items-center rounded-full bg-ink font-mono text-[10px] tabular-nums text-canvas">
+                  <span className="grid size-4 place-items-center rounded-none border border-ink bg-accent font-mono text-[10px] tabular-nums text-accent-ink">
                     {advancedFilterCount}
                   </span>
                 )}
@@ -288,7 +288,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             <div>
               <label
                 htmlFor="filter-category"
-                className="mb-1.5 block text-[11px] font-medium text-muted"
+                className="mb-1.5 block text-[11px] font-semibold text-muted"
               >
                 Category
               </label>
@@ -313,7 +313,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             <div>
               <label
                 htmlFor="filter-payment"
-                className="mb-1.5 block text-[11px] font-medium text-muted"
+                className="mb-1.5 block text-[11px] font-semibold text-muted"
               >
                 Payment method
               </label>
@@ -338,7 +338,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             <div>
               <label
                 htmlFor="filter-period"
-                className="mb-1.5 block text-[11px] font-medium text-muted"
+                className="mb-1.5 block text-[11px] font-semibold text-muted"
               >
                 Period
               </label>
@@ -360,7 +360,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             <div>
               <label
                 htmlFor="filter-sort"
-                className="mb-1.5 block text-[11px] font-medium text-muted"
+                className="mb-1.5 block text-[11px] font-semibold text-muted"
               >
                 Sort by
               </label>
@@ -379,11 +379,11 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             </div>
 
           {dateFilterMode === 'month' && (
-            <div className="grid max-w-md grid-cols-2 gap-3 rounded-lg border border-rule bg-surface-2/40 p-3">
+            <div className="grid max-w-md grid-cols-2 gap-3 rounded-none border-2 border-ink bg-surface-2/50 p-3">
               <div>
                 <label
                   htmlFor="filter-month"
-                  className="mb-1.5 block text-[11px] font-medium text-muted"
+                  className="mb-1.5 block text-[11px] font-semibold text-muted"
                 >
                   Month
                 </label>
@@ -407,7 +407,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
               <div>
                 <label
                   htmlFor="filter-year"
-                  className="mb-1.5 block text-[11px] font-medium text-muted"
+                  className="mb-1.5 block text-[11px] font-semibold text-muted"
                 >
                   Year
                 </label>
@@ -431,11 +431,11 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
           )}
 
           {dateFilterMode === 'range' && (
-            <div className="grid max-w-lg grid-cols-1 gap-3 rounded-lg border border-rule bg-surface-2/40 p-3 sm:grid-cols-2">
+            <div className="grid max-w-lg grid-cols-1 gap-3 rounded-none border-2 border-ink bg-surface-2/50 p-3 sm:grid-cols-2">
               <div>
                 <label
                   htmlFor="filter-start-date"
-                  className="mb-1.5 block text-[11px] font-medium text-muted"
+                  className="mb-1.5 block text-[11px] font-semibold text-muted"
                 >
                   From
                 </label>
@@ -454,7 +454,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
               <div>
                 <label
                   htmlFor="filter-end-date"
-                  className="mb-1.5 block text-[11px] font-medium text-muted"
+                  className="mb-1.5 block text-[11px] font-semibold text-muted"
                 >
                   To
                 </label>
@@ -476,11 +476,13 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px]">
             <p className="text-muted">
               Showing{' '}
-              <span className="font-mono font-medium tabular-nums text-ink">
+              <span className="font-mono font-semibold tabular-nums text-ink">
                 {filteredTransactions.length}
               </span>{' '}
               of{' '}
-              <span className="font-mono tabular-nums text-ink">{transactions.length}</span>{' '}
+              <span className="font-mono font-semibold tabular-nums text-ink">
+                {transactions.length}
+              </span>{' '}
               transactions
             </p>
 
@@ -488,7 +490,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="inline-flex items-center gap-1 rounded-md font-medium text-muted transition-colors hover:text-ink"
+                className="inline-flex items-center gap-1 border-b-2 border-transparent font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
               >
                 <X className="size-3.5" />
                 Clear filters
@@ -498,26 +500,26 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
         </div>
 
         {/* Totals for the current result set */}
-        <div className="grid grid-cols-3 divide-x divide-rule border-b border-rule">
+        <div className="grid grid-cols-3 divide-x-2 divide-ink border-b-2 border-ink">
           <div className="px-3 py-2.5 sm:px-5 sm:py-3">
-            <p className="text-[10px] text-muted sm:text-[11px]">Income shown</p>
-            <p className="mt-1 truncate font-mono text-[11px] font-medium tabular-nums text-income sm:text-sm">
+            <p className="text-[10px] font-semibold text-muted sm:text-[11px]">Income shown</p>
+            <p className="mt-1 truncate font-mono text-[11px] font-semibold tabular-nums text-income sm:text-sm">
               {filteredTotals.income > 0 ? '+' : ''}
               {formatCurrency(filteredTotals.income, settings.currency)}
             </p>
           </div>
           <div className="px-3 py-2.5 sm:px-5 sm:py-3">
-            <p className="text-[10px] text-muted sm:text-[11px]">Expenses shown</p>
-            <p className="mt-1 truncate font-mono text-[11px] font-medium tabular-nums text-expense sm:text-sm">
+            <p className="text-[10px] font-semibold text-muted sm:text-[11px]">Expenses shown</p>
+            <p className="mt-1 truncate font-mono text-[11px] font-semibold tabular-nums text-expense sm:text-sm">
               {filteredTotals.expense > 0 ? '-' : ''}
               {formatCurrency(filteredTotals.expense, settings.currency)}
             </p>
           </div>
           <div className="px-3 py-2.5 sm:px-5 sm:py-3">
-            <p className="text-[10px] text-muted sm:text-[11px]">Net</p>
+            <p className="text-[10px] font-semibold text-muted sm:text-[11px]">Net</p>
             <p
               className={cn(
-                'mt-1 truncate font-mono text-[11px] font-medium tabular-nums sm:text-sm',
+                'mt-1 truncate font-mono text-[11px] font-semibold tabular-nums sm:text-sm',
                 filteredTotals.balance < 0 ? 'text-expense' : 'text-ink'
               )}
             >
@@ -560,34 +562,38 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-rule text-[11px] font-medium text-muted">
-                    <th scope="col" className="px-4 py-2.5 font-medium lg:px-5">
+                  <tr className="border-b-2 border-ink text-[11px] font-bold text-ink">
+                    <th scope="col" className="px-4 py-2.5 lg:px-5">
                       Date
                     </th>
-                    <th scope="col" className="px-4 py-2.5 font-medium">
+                    <th scope="col" className="px-4 py-2.5">
                       Category
                     </th>
-                    <th scope="col" className="px-4 py-2.5 font-medium">
+                    <th scope="col" className="px-4 py-2.5">
                       Note
                     </th>
-                    <th scope="col" className="px-4 py-2.5 font-medium">
+                    <th scope="col" className="px-4 py-2.5">
                       Payment
                     </th>
-                    <th scope="col" className="px-4 py-2.5 text-right font-medium">
+                    <th scope="col" className="px-4 py-2.5 text-right">
                       Amount
                     </th>
-                    <th scope="col" className="px-4 py-2.5 text-right font-medium lg:px-5">
+                    <th scope="col" className="px-4 py-2.5 text-right lg:px-5">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-rule">
+                <tbody className="divide-y-2 divide-ink/10">
                   {paginatedTransactions.map((tx) => {
                     const category = categoryMap.get(tx.categoryId);
                     const isIncome = tx.type === 'income';
 
                     return (
-                      <tr key={tx.id} className="transition-colors hover:bg-surface-2/50">
+                      <tr
+                        key={tx.id}
+                        onClick={() => onEditTransaction(tx)}
+                        className="cursor-pointer transition-colors hover:bg-accent-soft/60"
+                      >
                         <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] tabular-nums text-muted lg:px-5">
                           {formatDateShort(tx.transactionDate)}
                         </td>
@@ -596,10 +602,10 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
                           <div className="flex items-center gap-2.5">
                             <CategoryAvatar category={category} size="sm" />
                             <div className="min-w-0">
-                              <p className="truncate text-xs font-medium text-ink">
+                              <p className="truncate text-xs font-semibold text-ink">
                                 {category?.name || 'Uncategorized'}
                               </p>
-                              <p className="text-[10px] capitalize text-faint">{tx.type}</p>
+                              <p className="text-[10px] capitalize text-muted">{tx.type}</p>
                             </div>
                           </div>
                         </td>
@@ -619,7 +625,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
                         <td className="whitespace-nowrap px-4 py-3 text-right">
                           <span
                             className={cn(
-                              'font-mono text-xs font-medium tabular-nums',
+                              'font-mono text-xs font-semibold tabular-nums',
                               isIncome ? 'text-income' : 'text-expense'
                             )}
                           >
@@ -629,7 +635,10 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
                         </td>
 
                         <td className="whitespace-nowrap px-4 py-3 lg:px-5">
-                          <div className="flex items-center justify-end gap-0.5">
+                          <div
+                            className="flex items-center justify-end gap-0.5"
+                            onClick={(event) => event.stopPropagation()}
+                          >
                             <IconButton
                               label={`Edit ${category?.name || 'transaction'}`}
                               onClick={() => onEditTransaction(tx)}
@@ -654,20 +663,30 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             </div>
 
             {/* Mobile list */}
-            <ul className="divide-y divide-rule md:hidden">
+            <ul className="divide-y-2 divide-ink/10 md:hidden">
               {paginatedTransactions.map((tx) => {
                 const category = categoryMap.get(tx.categoryId);
                 const isIncome = tx.type === 'income';
 
                 return (
-                  <li key={tx.id} className="px-4 py-3">
-                    <div className="flex items-start gap-3">
+                  <li
+                    key={tx.id}
+                    className="relative px-4 py-3 transition-colors hover:bg-accent-soft/60"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onEditTransaction(tx)}
+                      aria-label={`Edit ${category?.name || 'transaction'}`}
+                      className="absolute inset-0 z-0 rounded-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-focus"
+                    />
+
+                    <div className="pointer-events-none relative z-10 flex items-start gap-3">
                       <CategoryAvatar category={category} size="md" />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-ink">
+                            <p className="truncate text-sm font-semibold text-ink">
                               {category?.name || 'Uncategorized'}
                             </p>
                             <p className="mt-0.5 truncate text-[11px] text-muted">
@@ -680,7 +699,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
 
                           <span
                             className={cn(
-                              'shrink-0 font-mono text-xs font-medium tabular-nums',
+                              'shrink-0 font-mono text-xs font-semibold tabular-nums',
                               isIncome ? 'text-income' : 'text-expense'
                             )}
                           >
@@ -690,11 +709,11 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
                         </div>
 
                         <div className="mt-1 flex items-center justify-between gap-2">
-                          <span className="text-[10px] text-faint">
+                          <span className="text-[10px] text-muted">
                             {tx.paymentMethod || 'No payment method'}
                           </span>
 
-                          <div className="flex items-center gap-0.5">
+                          <div className="pointer-events-auto flex items-center gap-0.5">
                             <IconButton
                               label={`Edit ${category?.name || 'transaction'}`}
                               onClick={() => onEditTransaction(tx)}
@@ -719,14 +738,14 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
             </ul>
 
             {/* Pagination */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-rule px-4 py-3 sm:px-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink px-4 py-3 sm:px-5">
               <p className="text-[11px] text-muted">
                 {startIndex + 1}–
-                <span className="font-mono tabular-nums">
+                <span className="font-mono font-semibold tabular-nums">
                   {Math.min(startIndex + PAGE_SIZE, filteredTransactions.length)}
                 </span>{' '}
                 of{' '}
-                <span className="font-mono tabular-nums">
+                <span className="font-mono font-semibold tabular-nums">
                   {filteredTransactions.length}
                 </span>
               </p>
@@ -743,7 +762,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({
                   <span className="hidden sm:inline">Previous</span>
                 </Button>
 
-                <span className="px-1.5 font-mono text-[11px] tabular-nums text-muted">
+                <span className="px-1.5 font-mono text-[11px] font-semibold tabular-nums text-ink">
                   {page} / {totalPages}
                 </span>
 
